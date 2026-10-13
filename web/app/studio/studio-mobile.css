@@ -123,7 +123,7 @@
 .m-dock {
   position: fixed;
   left: 12px;
-  right: 12px;
+  right: 86px;
   bottom: calc(10px + env(safe-area-inset-bottom, 0px));
   z-index: 15;
   display: flex;
@@ -136,8 +136,7 @@
   pointer-events: auto;
 }
 
-.m-bar,
-.m-search {
+.m-bar {
   border: 1px solid color-mix(in srgb, var(--line-strong) 70%, transparent);
   background: color-mix(in srgb, var(--surface) 80%, transparent);
   box-shadow: var(--float);
@@ -183,19 +182,33 @@
   left: calc(100% - 7px);
 }
 
-.m-search {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
+.s-assistant.is-mobile {
+  right: 12px;
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  z-index: 14;
 }
 
-.s-assistant.is-mobile {
-  right: 14px;
-  bottom: calc(82px + env(safe-area-inset-bottom, 0px));
-  z-index: 14;
+/* the bot sits in the dock, beside the tab bar, as a round button */
+.s-assistant.is-mobile .s-mascot-btn {
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 62px;
+  border: 1px solid color-mix(in srgb, var(--line-strong) 70%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  box-shadow: var(--float);
+  -webkit-backdrop-filter: blur(22px) saturate(1.6);
+  backdrop-filter: blur(22px) saturate(1.6);
+}
+
+.s-assistant.is-mobile .s-mascot {
+  filter: none;
+}
+
+.s-assistant.is-mobile .s-mascot-badge {
+  top: -3px;
+  right: -3px;
 }
 
 /* ───────── bottom drawers ───────── */
@@ -810,9 +823,24 @@
   color: var(--accent);
 }
 
-/* On a phone the quick actions lead the Today screen. */
+/* On a phone the Today screen leads with the quick actions, then the day's numbers. */
 .is-mobile .s-quick {
+  order: -2;
+  flex-wrap: wrap;
+  margin-inline: 0;
+  padding-inline: 0;
+  overflow: visible;
+}
+
+.is-mobile .s-quick button {
+  flex: 1 1 auto;
+  justify-content: center;
+}
+
+.is-mobile .s-sofar {
   order: -1;
+  padding-top: 0;
+  border-top: 0;
 }
 
 /* forms in a drawer */
@@ -839,4 +867,37 @@
 
 .is-mobile .s-toast-layer {
   bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+}
+
+/* search and add share the header */
+.m-top-acts {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.m-top-search {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+/* the dropdown chip looks like the pills it sits beside */
+.is-mobile .s-filter-select {
+  padding: 8px 14px;
+  border: 0;
+  background: var(--sunken);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.is-mobile .s-filter-select.is-set {
+  background: var(--ink);
+  color: var(--bg);
 }

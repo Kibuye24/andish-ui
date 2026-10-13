@@ -103,7 +103,7 @@ export default function StudioApp({ forceMobile = false }: { forceMobile?: boole
     const rows = bookings
       .filter((b) => !mine || b.resource === "kevin")
       .map((b) => [b.ref, `Today, ${b.start}`, b.customer, b.service, resources.find((r) => r.id === b.resource)?.name ?? "", b.status, b.payment]);
-    const withLive = current.tabs.map((t) => (t.id === "list" && t.table ? { ...t, label: mine ? "My bookings" : t.label, table: { ...t.table, rows, action: mine ? undefined : t.table.action } } : t));
+    const withLive = current.tabs.map((t) => (t.id === "list" && t.table ? { ...t, label: mine ? "My bookings" : t.label, table: { ...t.table, rows, action: mine ? undefined : t.table.action, moreFilters: mine ? undefined : [{ label: "Barber", options: resources.map((r) => r.name) }] } } : t));
     return mine ? withLive.filter((t) => t.id === "calendar" || t.id === "list") : withLive;
   }, [current, role, bookings]);
 

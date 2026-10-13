@@ -8,6 +8,8 @@ export type TableDef = {
   pills?: number[];
   /** Status values offered as quick filters. */
   filters?: string[];
+  /** More filters, each on its own column. With several filters they all become compact dropdowns. */
+  moreFilters?: { label: string; options: string[] }[];
   action?: string;
   note?: string;
 };

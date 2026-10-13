@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useMemo, useState } from "react";
-import { Check, ChevronLeft, ChevronRight, Monitor, Plus, Search, Smartphone, X } from "lucide-react";
+import { Check, ChevronDown, ChevronLeft, ChevronRight, Monitor, Plus, Search, Smartphone, X } from "lucide-react";
 import {
   capabilities,
   pages,
@@ -445,16 +445,12 @@ export function Agenda({
       </div>
 
       {!onlyResource && (
-        <div className="s-chips" role="group" aria-label="Show bookings for">
-          <button type="button" aria-pressed={picked === null} onClick={() => setPicked(null)}>
-            Everyone
-          </button>
-          {resources.map((r) => (
-            <button key={r.id} type="button" aria-pressed={picked === r.id} onClick={() => setPicked(r.id)}>
-              {r.name}
-            </button>
-          ))}
-        </div>
+        <FilterRow
+          label="Show bookings for"
+          groups={[{ label: "Barber", options: resources.map((r) => r.name) }]}
+          values={{ Barber: picked ? who(picked) : null }}
+          onChange={(_, v) => setPicked(resources.find((r) => r.name === v)?.id ?? null)}
+        />
       )}
 
       {list.length === 0 ? (
@@ -502,17 +498,75 @@ export function Agenda({
 
 /* ───────── Generic table and setup list ───────── */
 
+/* ───────── filters: pills when there are few options, a compact dropdown when there are many ───────── */
+
+export type FilterGroup = { label: string; options: string[] };
+const PILLS_MAX = 4;
+
+export function FilterRow({
+  groups,
+  values,
+  onChange,
+  label,
+}: {
+  groups: FilterGroup[];
+  values: Record<string, string | null>;
+  onChange: (group: string, value: string | null) => void;
+  label: string;
+}) {
+  // Pills only make sense for one short list. Several filters, or a long list, become dropdowns.
+  const asPills = (g: FilterGroup) => groups.length === 1 && g.options.length <= PILLS_MAX;
+  return (
+    <div className="s-chips" role="group" aria-label={label}>
+      {groups.map((g) => {
+        const value = values[g.label] ?? null;
+        if (asPills(g)) {
+          return (
+            <Fragment key={g.label}>
+              <button type="button" aria-pressed={value === null} onClick={() => onChange(g.label, null)}>
+                All
+              </button>
+              {g.options.map((o) => (
+                <button key={o} type="button" aria-pressed={value === o} onClick={() => onChange(g.label, o)}>
+                  {o}
+                </button>
+              ))}
+            </Fragment>
+          );
+        }
+        return (
+          <label key={g.label} className={`s-filter-select${value ? " is-set" : ""}`}>
+            <span>
+              {g.label}: <strong>{value ?? "All"}</strong>
+            </span>
+            <ChevronDown size={14} aria-hidden="true" />
+            <select aria-label={g.label} value={value ?? ""} onChange={(e) => onChange(g.label, e.target.value || null)}>
+              <option value="">All</option>
+              {g.options.map((o) => (
+                <option key={o} value={o}>
+                  {o}
+                </option>
+              ))}
+            </select>
+          </label>
+        );
+      })}
+    </div>
+  );
+}
+
 export function DataTable({ def, onAction }: { def: TableDef; onAction?: () => void }) {
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<string | null>(null);
+  const [picked, setPicked] = useState<Record<string, string | null>>({});
+  const groups: FilterGroup[] = [...(def.filters ? [{ label: "Status", options: def.filters }] : []), ...(def.moreFilters ?? [])];
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
     return def.rows.filter((row) => {
-      if (filter && !row.includes(filter)) return false;
+      for (const v of Object.values(picked)) if (v && !row.includes(v)) return false;
       return q === "" || row.some((cell) => cell.toLowerCase().includes(q));
     });
-  }, [def.rows, query, filter]);
+  }, [def.rows, query, picked]);
 
   const statusCol = def.pills?.[def.pills.length - 1];
 
@@ -523,18 +577,7 @@ export function DataTable({ def, onAction }: { def: TableDef; onAction?: () => v
           <Search size={15} aria-hidden="true" />
           <input type="search" placeholder="Search this list" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search this list" />
         </label>
-        {def.filters && (
-          <div className="s-chips" role="group" aria-label="Filter by status">
-            <button type="button" aria-pressed={filter === null} onClick={() => setFilter(null)}>
-              All
-            </button>
-            {def.filters.map((f) => (
-              <button key={f} type="button" aria-pressed={filter === f} onClick={() => setFilter(f)}>
-                {f}
-              </button>
-            ))}
-          </div>
-        )}
+        {groups.length > 0 && <FilterRow groups={groups} values={picked} onChange={(g, v) => setPicked((p) => ({ ...p, [g]: v }))} label="Filters" />}
         {def.action && (
           <button type="button" className="s-btn is-primary s-push" onClick={onAction}>
             <Plus size={15} aria-hidden="true" />

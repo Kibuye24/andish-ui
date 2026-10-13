@@ -222,7 +222,7 @@ export default function Assistant({ section, sectionLabel, mobile = false, brief
 
       <button type="button" className={`s-mascot-btn ${open ? "is-open" : ""}`} onClick={() => setOpen(!open)} aria-expanded={open} aria-label={open ? "Close the assistant" : "Open the assistant"}>
         {!open && !mobile && <span className="s-mascot-hint">Ask me anything</span>}
-        <Mascot size={mobile ? 50 : 56} track />
+        <Mascot size={mobile ? 38 : 56} track />
         {!open && proposal === "open" && <span className="s-mascot-badge">1</span>}
       </button>
     </div>

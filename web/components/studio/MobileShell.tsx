@@ -113,11 +113,16 @@ export default function MobileShell(p: Props) {
             <p className="m-kicker">{p.kicker}</p>
             <h1>{p.title}</h1>
           </div>
-          {p.action && (
-            <button type="button" className="m-add" aria-label={p.action} onClick={p.onAction}>
-              <Plus size={20} />
+          <div className="m-top-acts">
+            <button type="button" className="m-top-search" aria-label="Search" onClick={() => setSheet("search")}>
+              <Search size={19} />
             </button>
-          )}
+            {p.action && (
+              <button type="button" className="m-add" aria-label={p.action} onClick={p.onAction}>
+                <Plus size={20} />
+              </button>
+            )}
+          </div>
         </div>
         {p.tabs.length > 0 && (
           <div className="m-tabs" role="tablist" aria-label={p.current.label}>
@@ -158,9 +163,6 @@ export default function MobileShell(p: Props) {
             More
           </button>
         </nav>
-        <button type="button" className="m-search" aria-label="Search" onClick={() => setSheet("search")}>
-          <Search size={21} />
-        </button>
       </div>
 
       <Assistant key={p.brief ?? "none"} mobile brief={p.brief} section={p.current.id} sectionLabel={p.current.id === "today" ? "Today" : p.current.label} />
