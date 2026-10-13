@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { ChevronRight, Ellipsis, ExternalLink, Moon, Plus, Search, Sun, type LucideIcon } from "lucide-react";
+import { ChevronRight, Ellipsis, ExternalLink, Moon, Plus, Search, Sun, X, type LucideIcon } from "lucide-react";
 import type { Role, SectionDef, SectionId, TabDef } from "@/lib/studio-data";
 import Assistant from "./Assistant";
 import type { Command } from "./CommandPalette";
-import Sheet from "./Sheet";
 import type { Go } from "./views";
 
 const BAR_SLOTS = 4;
@@ -25,11 +24,15 @@ type Props = {
   onAction?: () => void;
   /** Drawers and messages that sit above the whole screen, such as forms. */
   overlay?: ReactNode;
-  /** Address of the public site, shown as a link in the More drawer. */
   siteUrl?: string;
   siteHref?: string;
   /** The description typed into the landing page chat, if that is how this visit began. */
   brief?: string;
+  /** What the header search is typed into. On a list it also filters that list. */
+  query: string;
+  setQuery: (q: string) => void;
+  /** The name of the list on screen, if there is one, for the search hint. */
+  listName?: string;
   icons: Record<SectionId, LucideIcon>;
   badges: Partial<Record<SectionId, number>>;
   commands: Command[];
@@ -43,91 +46,89 @@ type Props = {
   children: ReactNode;
 };
 
-function SearchSheet({ commands, jump, close }: { commands: Command[]; jump: Command[]; close: () => void }) {
-  const [query, setQuery] = useState("");
-  const input = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    input.current?.focus();
-  }, []);
-
-  const shown = useMemo(() => {
-    const words = query.toLowerCase().split(/\s+/).filter(Boolean);
-    if (words.length === 0) return jump;
-    return commands.filter((c) => words.every((w) => `${c.label} ${c.hint}`.toLowerCase().includes(w))).slice(0, 30);
-  }, [commands, jump, query]);
-
-  return (
-    <Sheet title="Search" tall onClose={close}>
-      <label className="s-search m-search-field">
-        <Search size={17} aria-hidden="true" />
-        <input ref={input} id="mobile-search" type="search" placeholder="Bookings, orders, settings" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search the studio" />
-      </label>
-      <p className="s-label m-results-label">{query.trim() ? `${shown.length} found` : "Jump to"}</p>
-      <ul className="m-results">
-        {shown.length === 0 && <li className="s-empty">Nothing by that name. Try “orders” or “working hours”.</li>}
-        {shown.map((c) => (
-          <li key={c.label + c.hint}>
-            <button
-              type="button"
-              onClick={() => {
-                c.run();
-                close();
-              }}
-            >
-              <span>
-                <strong>{c.label}</strong>
-                <small>{c.hint}</small>
-              </span>
-              <ChevronRight size={17} aria-hidden="true" />
-            </button>
-          </li>
-        ))}
-      </ul>
-    </Sheet>
-  );
-}
-
 export default function MobileShell(p: Props) {
-  const [sheet, setSheet] = useState<"more" | "search" | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [more, setMore] = useState(false);
   const body = useRef<HTMLElement>(null);
+  const field = useRef<HTMLInputElement>(null);
 
   // Start each screen at the top, the way a pushed native screen does.
   useEffect(() => {
     body.current?.scrollTo({ top: 0 });
   }, [p.current.id, p.activeTab?.id]);
 
+  useEffect(() => {
+    if (searching) field.current?.focus();
+  }, [searching]);
+
   const inBar = p.visible.slice(0, BAR_SLOTS);
   const inMore = p.visible.slice(BAR_SLOTS);
   const moreActive = inMore.some((s) => s.id === p.current.id);
   const moreBadge = inMore.reduce((n, s) => n + (p.badges[s.id] ?? 0), 0);
-  const jump: Command[] = p.visible.map((s) => ({ label: s.label, hint: s.blurb, run: () => p.go(s.id) }));
+
+  // Matches from the rest of the studio. On a list these sit above the filtered list.
+  const found = useMemo(() => {
+    const words = p.query.toLowerCase().split(/\s+/).filter(Boolean);
+    if (words.length === 0) return [];
+    return p.commands.filter((c) => words.every((w) => `${c.label} ${c.hint}`.toLowerCase().includes(w))).slice(0, p.listName ? 3 : 6);
+  }, [p.commands, p.query, p.listName]);
+
+  function closeSearch() {
+    setSearching(false);
+    p.setQuery("");
+  }
+
+  function leave(run: () => void) {
+    setSearching(false);
+    setMore(false);
+    run();
+  }
 
   const label = (s: SectionDef) => (p.role === "staff" && s.id === "today" ? "My day" : p.role === "staff" && s.id === "bookings" ? "Mine" : s.label);
 
   return (
     <div className="studio is-mobile" data-theme={p.dark ? "dark" : "light"} style={p.themeStyle}>
       <header className="m-top">
-        <div className="m-top-row">
-          <div>
-            <p className="m-kicker">{p.kicker}</p>
-            <h1>{p.title}</h1>
-          </div>
-          <div className="m-top-acts">
-            <button type="button" className="m-top-search" aria-label="Search" onClick={() => setSheet("search")}>
-              <Search size={19} />
+        {searching ? (
+          <div className="m-top-row is-search">
+            <label className="m-searchbar">
+              <Search size={18} aria-hidden="true" />
+              <input
+                ref={field}
+                id="top-search"
+                type="search"
+                value={p.query}
+                onChange={(e) => p.setQuery(e.target.value)}
+                placeholder={p.listName ? `Search ${p.listName.toLowerCase()}` : "Search the studio"}
+                aria-label={p.listName ? `Search ${p.listName.toLowerCase()} and the studio` : "Search the studio"}
+              />
+            </label>
+            <button type="button" className="m-top-search" onClick={closeSearch} aria-label="Close search">
+              <X size={19} />
             </button>
-            {p.action && (
-              <button type="button" className="m-add" aria-label={p.action} onClick={p.onAction}>
-                <Plus size={20} />
-              </button>
-            )}
           </div>
-        </div>
+        ) : (
+          <div className="m-top-row">
+            <div>
+              <p className="m-kicker">{p.kicker}</p>
+              <h1>{p.title}</h1>
+            </div>
+            <div className="m-top-acts">
+              <button type="button" className="m-top-search" aria-label="Search" onClick={() => setSearching(true)}>
+                <Search size={19} />
+              </button>
+              {p.action && (
+                <button type="button" className="m-add" aria-label={p.action} onClick={p.onAction}>
+                  <Plus size={20} />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
         {p.tabs.length > 0 && (
           <div className="m-tabs" role="tablist" aria-label={p.current.label}>
             {p.tabs.map((t) => (
-              <button key={t.id} type="button" role="tab" aria-selected={p.activeTab?.id === t.id} onClick={() => p.setTab(t.id)}>
+              <button key={t.id} type="button" role="tab" aria-selected={p.activeTab?.id === t.id} onClick={() => leave(() => p.setTab(t.id))}>
                 {t.label}
                 {p.tabBadges[t.id] ? <b>{p.tabBadges[t.id]}</b> : null}
               </button>
@@ -137,6 +138,25 @@ export default function MobileShell(p: Props) {
       </header>
 
       <main className="m-body" ref={body}>
+        {searching && found.length > 0 && (
+          <section className="m-found" aria-label={p.listName ? "Elsewhere in the studio" : "Go to"}>
+            <p className="s-label">{p.listName ? "Elsewhere in the studio" : "Go to"}</p>
+            <ul>
+              {found.map((c) => (
+                <li key={c.label + c.hint}>
+                  <button type="button" onClick={() => leave(c.run)}>
+                    <span>
+                      <strong>{c.label}</strong>
+                      <small>{c.hint}</small>
+                    </span>
+                    <ChevronRight size={16} aria-hidden="true" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+        {searching && !p.listName && p.query.trim() && found.length === 0 && <p className="s-empty">Nothing by that name. Try “orders” or “working hours”.</p>}
         {p.children}
       </main>
 
@@ -146,7 +166,7 @@ export default function MobileShell(p: Props) {
             const Icon = p.icons[s.id];
             const badge = p.badges[s.id];
             return (
-              <button key={s.id} type="button" aria-current={p.current.id === s.id ? "page" : undefined} onClick={() => p.go(s.id)}>
+              <button key={s.id} type="button" aria-current={p.current.id === s.id ? "page" : undefined} onClick={() => leave(() => p.go(s.id))}>
                 <span className="m-bar-icon">
                   <Icon size={21} aria-hidden="true" />
                   {badge ? <b>{badge}</b> : null}
@@ -155,7 +175,7 @@ export default function MobileShell(p: Props) {
               </button>
             );
           })}
-          <button type="button" aria-current={moreActive ? "page" : undefined} aria-haspopup="dialog" onClick={() => setSheet("more")}>
+          <button type="button" aria-current={moreActive ? "page" : undefined} aria-haspopup="menu" aria-expanded={more} onClick={() => setMore(!more)}>
             <span className="m-bar-icon">
               <Ellipsis size={21} aria-hidden="true" />
               {moreBadge ? <b>{moreBadge}</b> : null}
@@ -165,54 +185,27 @@ export default function MobileShell(p: Props) {
         </nav>
       </div>
 
-      <Assistant key={p.brief ?? "none"} mobile brief={p.brief} section={p.current.id} sectionLabel={p.current.id === "today" ? "Today" : p.current.label} />
-
-      {p.overlay}
-
-      {sheet === "search" && <SearchSheet commands={p.commands} jump={jump} close={() => setSheet(null)} />}
-
-      {sheet === "more" && (
-        <Sheet title={p.workspace} onClose={() => setSheet(null)}>
-          {inMore.length > 0 && (
-            <ul className="m-more">
-              {inMore.map((s) => {
-                const Icon = p.icons[s.id];
-                return (
-                  <li key={s.id}>
-                    <button
-                      type="button"
-                      aria-current={p.current.id === s.id ? "page" : undefined}
-                      onClick={() => {
-                        p.go(s.id);
-                        setSheet(null);
-                      }}
-                    >
-                      <Icon size={22} aria-hidden="true" />
-                      <strong>{s.label}</strong>
-                      <small>{s.blurb}</small>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-
-          {p.siteUrl && (
-            <a className="m-site" href={p.siteHref ?? `https://${p.siteUrl}`} target="_blank" rel="noopener noreferrer">
-              <span>
-                <strong>View site</strong>
-                <small>{p.siteUrl}</small>
-              </span>
-              <ExternalLink size={18} aria-hidden="true" />
-            </a>
-          )}
-
-          <div className="m-prefs">
-            <div>
-              <span>
-                <strong>Viewing as</strong>
-                <small>{p.role === "owner" ? "Everything in the workspace" : "A barber sees only their own bookings"}</small>
-              </span>
+      {/* A small menu above the bar. It leaves the screen behind it visible. */}
+      {more && (
+        <>
+          <button type="button" className="m-pop-catch" aria-label="Close menu" onClick={() => setMore(false)} />
+          <div className="m-pop" role="menu" aria-label="More">
+            {inMore.map((s) => {
+              const Icon = p.icons[s.id];
+              return (
+                <button key={s.id} type="button" role="menuitem" aria-current={p.current.id === s.id ? "page" : undefined} onClick={() => leave(() => p.go(s.id))}>
+                  <Icon size={18} aria-hidden="true" />
+                  {s.label}
+                </button>
+              );
+            })}
+            {p.siteUrl && (
+              <a role="menuitem" href={p.siteHref ?? `https://${p.siteUrl}`} target="_blank" rel="noopener noreferrer">
+                <ExternalLink size={18} aria-hidden="true" />
+                View site
+              </a>
+            )}
+            <div className="m-pop-foot">
               <div className="s-seg" role="group" aria-label="Viewing as">
                 <button type="button" aria-pressed={p.role === "owner"} onClick={() => p.setRole("owner")}>
                   Owner
@@ -220,34 +213,27 @@ export default function MobileShell(p: Props) {
                 <button
                   type="button"
                   aria-pressed={p.role === "staff"}
-                  onClick={() => {
-                    p.setRole("staff");
-                    p.go("today");
-                    setSheet(null);
-                  }}
+                  onClick={() =>
+                    leave(() => {
+                      p.setRole("staff");
+                      p.go("today");
+                    })
+                  }
                 >
                   Barber
                 </button>
               </div>
-            </div>
-            <div>
-              <span>
-                <strong>Appearance</strong>
-                <small>{p.dark ? "Dark" : "Light"}</small>
-              </span>
               <button type="button" className="s-icon-btn" onClick={() => p.setDark(!p.dark)} aria-label={p.dark ? "Use the light theme" : "Use the dark theme"}>
-                {p.dark ? <Sun size={18} /> : <Moon size={18} />}
+                {p.dark ? <Sun size={17} /> : <Moon size={17} />}
               </button>
             </div>
-            <div>
-              <span>
-                <strong>{p.name}</strong>
-                <small>{p.role === "owner" ? "Owner" : "Barber"}</small>
-              </span>
-            </div>
           </div>
-        </Sheet>
+        </>
       )}
+
+      <Assistant key={p.brief ?? "none"} mobile brief={p.brief} section={p.current.id} sectionLabel={p.current.id === "today" ? "Today" : p.current.label} />
+
+      {p.overlay}
     </div>
   );
 }

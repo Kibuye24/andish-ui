@@ -22,11 +22,12 @@ import CommandPalette, { type Command } from "./CommandPalette";
 import Files from "./Files";
 import FormPanel, { Toast } from "./FormPanel";
 import MobileShell from "./MobileShell";
+import RecordView from "./RecordView";
 import ThemeSettings from "./ThemeSettings";
 import { useStudioTheme } from "./useStudioTheme";
 import { accentStyle } from "@/lib/studio-themes";
 import { bookingFrom, fileNodeFrom, forms, type Values } from "@/lib/studio-forms";
-import { Agenda, Appearance, CalendarDay, DataTable, MyDay, Pages, type PageItem, ReportView, SetupList, ToConfirm, Today, WorkspaceSettings } from "./views";
+import { Agenda, Appearance, BookingActions, BookingFacts, CalendarDay, DataTable, MyDay, Pages, type PageItem, ReportView, SetupList, ToConfirm, Today, WorkspaceSettings } from "./views";
 
 const icons: Record<SectionId, LucideIcon> = {
   today: Sunrise,
@@ -77,6 +78,9 @@ export default function StudioApp({ forceMobile = false }: { forceMobile?: boole
   const [toast, setToast] = useState<string | null>(null);
   // Set when someone arrives from the landing page chat: the AI builder starts from this.
   const [brief, setBrief] = useState<string | null>(null);
+  // The header search on a phone, and the record that is open on its own page.
+  const [query, setQuery] = useState("");
+  const [detail, setDetail] = useState<{ key: string; id: string } | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(
@@ -112,6 +116,18 @@ export default function StudioApp({ forceMobile = false }: { forceMobile?: boole
   function go(next: SectionId, nextTab?: string) {
     setSection(next);
     setTab(nextTab ?? "");
+    setQuery("");
+    setDetail(null);
+  }
+
+  function pickTab(id: string) {
+    setTab(id);
+    setQuery("");
+    setDetail(null);
+  }
+
+  function replaceRow(key: string, id: string, next: string[]) {
+    setOps((o) => ({ ...o, [key]: [...(o[key] ?? []), (rows) => rows.map((r) => (r[0] === id ? next : r))] }));
   }
 
   function setStatus(id: string, status: BookingStatus) {
@@ -282,7 +298,54 @@ export default function StudioApp({ forceMobile = false }: { forceMobile?: boole
       const key = `${current.id}/${activeTab.id}`;
       const added = ops[key];
       const def = added ? { ...activeTab.table, rows: added.reduce((rows, op) => op(rows), activeTab.table.rows) } : activeTab.table;
-      return <DataTable key={key} def={def} onAction={forms[key] ? () => openForm(key) : undefined} />;
+      const open = detail && detail.key === key ? def.rows.find((r) => r[0] === detail.id) : undefined;
+      if (open && def.detail) {
+        const booking = key === "bookings/list" ? bookings.find((b) => b.ref === open[0]) : undefined;
+        return (
+          <RecordView
+            key={`${key}/${open[0]}`}
+            backLabel={activeTab.label}
+            cols={def.cols}
+            row={open}
+            pills={def.pills}
+            statusOptions={def.filters}
+            detail={def.detail}
+            onBack={() => setDetail(null)}
+            onSave={(next) => {
+              replaceRow(key, open[0], next);
+              setDetail(null);
+              flash(`${next[0]} saved.`);
+            }}
+            onAction={(a) => {
+              if (a.form) openForm(a.form);
+              if (a.set) {
+                const next = [...open];
+                next[a.set[0]] = a.set[1];
+                replaceRow(key, open[0], next);
+                flash(a.done ?? "Updated.");
+              }
+            }}
+          >
+            {booking ? (
+              <>
+                <p className="s-label">{booking.ref}</p>
+                <h2>{booking.customer}</h2>
+                <BookingFacts b={booking} />
+                <BookingActions b={booking} setStatus={setStatus} />
+              </>
+            ) : undefined}
+          </RecordView>
+        );
+      }
+      return (
+        <DataTable
+          key={key}
+          def={def}
+          query={mobile ? query : undefined}
+          onOpen={def.detail ? (row) => setDetail({ key, id: row[0] }) : undefined}
+          onAction={forms[key] ? () => openForm(key) : undefined}
+        />
+      );
     }
     if (activeTab.setup) return <SetupList def={activeTab.setup} />;
     return null;
@@ -333,10 +396,13 @@ export default function StudioApp({ forceMobile = false }: { forceMobile?: boole
         kicker={current.id === "today" ? blurb : workspace.name}
         current={current}
         visible={visible}
-        tabs={tabs}
+        tabs={detail ? [] : tabs}
+        query={query}
+        setQuery={setQuery}
+        listName={activeTab?.table && !detail ? activeTab.label : undefined}
         activeTab={activeTab}
         tabBadges={current.id === "payments" ? { confirm: claimsLeft.length } : {}}
-        action={action}
+        action={detail ? undefined : action}
         onAction={actionKey ? () => openForm(actionKey) : undefined}
         overlay={layer}
         icons={icons}
@@ -349,7 +415,7 @@ export default function StudioApp({ forceMobile = false }: { forceMobile?: boole
         dark={dark}
         themeStyle={themeStyle}
         go={go}
-        setTab={setTab}
+        setTab={pickTab}
         setRole={setRole}
         setDark={setDark}
       >
@@ -436,7 +502,7 @@ export default function StudioApp({ forceMobile = false }: { forceMobile?: boole
           {tabs.length > 0 && (
             <div className="s-tabs" role="tablist" aria-label={current.label}>
               {tabs.map((t) => (
-                <button key={t.id} type="button" role="tab" aria-selected={activeTab?.id === t.id} onClick={() => setTab(t.id)}>
+                <button key={t.id} type="button" role="tab" aria-selected={activeTab?.id === t.id} onClick={() => pickTab(t.id)}>
                   {t.label}
                   {current.id === "payments" && t.id === "confirm" && claimsLeft.length > 0 && <b>{claimsLeft.length}</b>}
                 </button>

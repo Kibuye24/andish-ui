@@ -12,6 +12,17 @@ export type TableDef = {
   moreFilters?: { label: string; options: string[] }[];
   action?: string;
   note?: string;
+  detail?: RecordDetail;
+};
+
+/** How one row of a list opens on its own page. */
+export type RecordDetail = {
+  noun: string;
+  /** Opens as an edit form. Otherwise it is a read-only page. */
+  edit?: boolean;
+  /** The stages a record goes through, shown as a short history. */
+  steps?: string[];
+  actions?: { label: string; primary?: boolean; done?: string; set?: [col: number, value: string]; form?: string }[];
 };
 
 export type SetupDef = { title: string; items: [title: string, detail: string, value?: string][] }[];
@@ -566,3 +577,54 @@ export const pillTone = (value: string): "ok" | "warn" | "bad" | "plain" => {
   if (/(confirm|paid|publish|active|complete|approved|fulfilled|in stock|received|sent|open|subscribed|read|connected)/.test(v)) return "ok";
   return "plain";
 };
+
+/* ───────── record pages ───────── */
+
+const details: Record<string, RecordDetail> = {
+  "bookings/list": { noun: "Booking" },
+  "bookings/services": { noun: "Service", edit: true },
+  "bookings/resources": { noun: "Staff or resource", edit: true },
+  "bookings/sessions": { noun: "Session", edit: true },
+  "store/orders": {
+    noun: "Order",
+    steps: ["Order placed", "Payment received", "Packed", "Handed to the customer"],
+    actions: [
+      { label: "Mark as fulfilled", primary: true, set: [6, "Fulfilled"], done: "Order marked as fulfilled." },
+      { label: "Cancel order", set: [6, "Cancelled"], done: "Order cancelled." },
+    ],
+  },
+  "store/products": { noun: "Product", edit: true },
+  "store/collections": { noun: "Collection", edit: true },
+  "store/inventory": {
+    noun: "Stock item",
+    steps: ["Counted at opening", "Sold or reserved today"],
+    actions: [{ label: "Adjust stock", primary: true, form: "store/inventory" }],
+  },
+  "store/discounts": { noun: "Discount", edit: true },
+  "payments/all": {
+    noun: "Payment",
+    steps: ["Customer started the payment", "Money received", "Matched to the order or booking"],
+    actions: [{ label: "Refund this payment", form: "payments/refunds" }],
+  },
+  "payments/refunds": {
+    noun: "Refund",
+    steps: ["Refund requested", "Approved by Joshua K.", "Money sent to the customer"],
+    actions: [{ label: "Mark as sent", primary: true, set: [5, "Sent"], done: "Refund marked as sent." }],
+  },
+  "payments/ledger": { noun: "Ledger entry", steps: ["Recorded automatically when the money moved"] },
+  "customers/people": { noun: "Customer", edit: true },
+  "customers/messages": { noun: "Message", actions: [{ label: "Mark as read", primary: true, set: [4, "Read"], done: "Marked as read." }] },
+  "customers/subscribers": { noun: "Subscriber", actions: [{ label: "Unsubscribe", set: [3, "Unsubscribed"], done: "Unsubscribed." }] },
+  "customers/comments": {
+    noun: "Comment",
+    actions: [
+      { label: "Approve", primary: true, set: [3, "Approved"], done: "Comment approved." },
+      { label: "Reject", set: [3, "Rejected"], done: "Comment rejected." },
+    ],
+  },
+  "website/articles": { noun: "Article", edit: true },
+  "website/content": { noun: "Content type", edit: true },
+  "settings/members": { noun: "Member", edit: true },
+};
+
+for (const s of sections) for (const t of s.tabs) if (t.table) t.table.detail = details[`${s.id}/${t.id}`];

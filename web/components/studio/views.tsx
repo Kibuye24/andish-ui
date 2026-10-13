@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useMemo, useState } from "react";
-import { Check, ChevronDown, ChevronLeft, ChevronRight, Monitor, Plus, Search, Smartphone, X } from "lucide-react";
+import { ArrowRight, Check, ChevronDown, ChevronLeft, ChevronRight, Monitor, Plus, Search, Smartphone, TrendingDown, TrendingUp, X } from "lucide-react";
 import {
   capabilities,
   pages,
@@ -18,6 +18,7 @@ import {
   type TableDef,
 } from "@/lib/studio-data";
 
+import Icon3D, { type Icon3DName } from "./Icon3D";
 import Sheet from "./Sheet";
 
 export type Go = (section: SectionId, tab?: string) => void;
@@ -71,13 +72,20 @@ export function Today({
     .sort((a, b) => toMin(a.start) - toMin(b.start))
     .slice(0, 6);
 
-  const quick: [label: string, form: string][] = [
-    ["New booking", "bookings/list"],
-    ["New order", "store/orders"],
-    ["Add a product", "store/products"],
-    ["Write an article", "website/articles"],
-    ["Upload files", "files/upload"],
+  const quick: [label: string, form: string, icon: Icon3DName][] = [
+    ["New booking", "bookings/list", "booking"],
+    ["New order", "store/orders", "order"],
+    ["Add a product", "store/products", "product"],
+    ["Write an article", "website/articles", "article"],
+    ["Upload files", "files/upload", "upload"],
   ];
+
+  const stats = [
+    caps.bookings && { label: "Bookings", value: String(bookings.filter((b) => b.status !== "Cancelled").length), up: true, note: "2 more than last Tuesday" },
+    caps.store && { label: "Sales", value: "KES 6,400", up: false, note: "5% less than last Tuesday" },
+    caps.payments && { label: "Received", value: "KES 5,700", up: true, note: "12% more than last Tuesday" },
+    caps.website && { label: "Website visitors", value: "312", up: true, note: "19% more than last Tuesday" },
+  ].filter((s) => s !== false);
 
   return (
     <div className="s-today">
@@ -134,40 +142,37 @@ export function Today({
       <section className="s-quick" aria-label="Quick actions">
         {quick
           .filter(([, form]) => caps[form.split("/")[0] as Capability] !== false)
-          .map(([label, form]) => (
+          .map(([label, form, icon]) => (
             <button key={label} type="button" onClick={() => openForm(form)}>
-              <Plus size={15} aria-hidden="true" />
-              {label}
+              <Icon3D name={icon} />
+              <span>{label}</span>
             </button>
           ))}
       </section>
 
-      <dl className="s-sofar" aria-label="Today so far">
-        {caps.bookings && (
-          <div>
-            <dt>Bookings today</dt>
-            <dd>{bookings.filter((b) => b.status !== "Cancelled").length}</dd>
-          </div>
-        )}
-        {caps.store && (
-          <div>
-            <dt>Sales today</dt>
-            <dd>KES 6,400</dd>
-          </div>
-        )}
-        {caps.payments && (
-          <div>
-            <dt>Received today</dt>
-            <dd>KES 5,700</dd>
-          </div>
-        )}
-        {caps.website && (
-          <div>
-            <dt>Website visitors</dt>
-            <dd>312</dd>
-          </div>
-        )}
-      </dl>
+      {stats.length > 0 && (
+        <section className="s-card s-stats" aria-label="Today so far">
+          <header>
+            <h2>Today so far</h2>
+            <button type="button" className="s-btn is-small" onClick={() => go("reports", "overview")}>
+              Open reports
+              <ArrowRight size={14} aria-hidden="true" />
+            </button>
+          </header>
+          <dl>
+            {stats.map((st) => (
+              <div key={st.label}>
+                <dt>{st.label}</dt>
+                <dd>{st.value}</dd>
+                <small className={`s-delta ${st.up ? "is-up" : "is-down"}`}>
+                  {st.up ? <TrendingUp size={14} aria-hidden="true" /> : <TrendingDown size={14} aria-hidden="true" />}
+                  {st.note}
+                </small>
+              </div>
+            ))}
+          </dl>
+        </section>
+      )}
     </div>
   );
 }
@@ -555,8 +560,21 @@ export function FilterRow({
   );
 }
 
-export function DataTable({ def, onAction }: { def: TableDef; onAction?: () => void }) {
-  const [query, setQuery] = useState("");
+export function DataTable({
+  def,
+  onAction,
+  onOpen,
+  query: outer,
+}: {
+  def: TableDef;
+  onAction?: () => void;
+  /** Opens one row on its own page. */
+  onOpen?: (row: string[]) => void;
+  /** Search text owned by the screen's header. When given, the list has no search box of its own. */
+  query?: string;
+}) {
+  const [own, setQuery] = useState("");
+  const query = outer ?? own;
   const [picked, setPicked] = useState<Record<string, string | null>>({});
   const groups: FilterGroup[] = [...(def.filters ? [{ label: "Status", options: def.filters }] : []), ...(def.moreFilters ?? [])];
 
@@ -573,10 +591,12 @@ export function DataTable({ def, onAction }: { def: TableDef; onAction?: () => v
   return (
     <div className="s-table-wrap">
       <div className="s-toolbar">
-        <label className="s-search">
-          <Search size={15} aria-hidden="true" />
-          <input type="search" placeholder="Search this list" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search this list" />
-        </label>
+        {outer === undefined && (
+          <label className="s-search">
+            <Search size={15} aria-hidden="true" />
+            <input type="search" placeholder="Search this list" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search this list" />
+          </label>
+        )}
         {groups.length > 0 && <FilterRow groups={groups} values={picked} onChange={(g, v) => setPicked((p) => ({ ...p, [g]: v }))} label="Filters" />}
         {def.action && (
           <button type="button" className="s-btn is-primary s-push" onClick={onAction}>
@@ -606,10 +626,18 @@ export function DataTable({ def, onAction }: { def: TableDef; onAction?: () => v
               </tr>
             ) : (
               rows.map((row, ri) => (
-                <tr key={`${row.join("|")}:${ri}`}>
+                <tr key={`${row.join("|")}:${ri}`} className={onOpen ? "is-link" : undefined} onClick={onOpen ? () => onOpen(row) : undefined}>
                   {row.map((cell, i) => (
                     <td key={i} data-label={def.cols[i]} className={i === statusCol ? "is-status" : undefined}>
-                      {def.pills?.includes(i) && cell ? <Pill value={cell} /> : cell}
+                      {def.pills?.includes(i) && cell ? (
+                        <Pill value={cell} />
+                      ) : i === 0 && onOpen ? (
+                        <button type="button" className="s-rowlink" aria-label={`Open ${cell}`}>
+                          {cell}
+                        </button>
+                      ) : (
+                        cell
+                      )}
                     </td>
                   ))}
                 </tr>

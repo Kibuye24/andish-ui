@@ -901,3 +901,194 @@
   background: var(--ink);
   color: var(--bg);
 }
+
+/* Today on a phone: five shortcuts in one row, then the numbers in a 2 by 2 */
+.is-mobile .s-quick {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 6px;
+}
+
+.is-mobile .s-quick button {
+  padding: 10px 2px 8px;
+  border-radius: 14px;
+  font-size: 11.5px;
+}
+
+.is-mobile .s-icon3d {
+  width: 38px;
+  height: 38px;
+}
+
+.is-mobile .s-stats {
+  order: -1;
+  padding: 14px;
+}
+
+.is-mobile .s-stats dl {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+/* tabs and filter pills wrap onto more rows, so nothing hides off screen */
+.is-mobile .m-tabs,
+.is-mobile .s-chips {
+  flex-wrap: wrap;
+  margin-inline: 0;
+  padding-inline: 0;
+  overflow: visible;
+}
+
+.is-mobile .m-tabs button {
+  flex: 1 1 auto;
+  justify-content: center;
+  padding: 7px 12px;
+  font-size: 13.5px;
+}
+
+/* the header search opens into a field */
+.m-top-row.is-search {
+  align-items: center;
+  gap: 10px;
+}
+
+.m-searchbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  transform-origin: right center;
+  animation: m-grow 0.22s ease-out;
+}
+
+.m-searchbar:focus-within {
+  border-color: var(--accent);
+}
+
+.m-searchbar input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  font: inherit;
+  font-size: 16px;
+  color: var(--ink);
+}
+
+.studio .m-searchbar input:focus-visible {
+  outline: none;
+}
+
+@keyframes m-grow {
+  from {
+    opacity: 0;
+    transform: scaleX(0.3);
+  }
+}
+
+.m-found {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.m-found ul {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.m-found li + li {
+  border-top: 1px solid var(--line);
+}
+
+.m-found button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 14px;
+}
+
+.m-found button span {
+  flex: 1;
+  min-width: 0;
+}
+
+.m-found strong {
+  display: block;
+  font-weight: 550;
+}
+
+.m-found svg {
+  flex: none;
+  color: var(--faint);
+}
+
+/* More: a small menu above the bar */
+.m-pop-catch {
+  position: fixed;
+  inset: 0;
+  z-index: 16;
+}
+
+.m-pop {
+  position: fixed;
+  right: 86px;
+  bottom: calc(82px + env(safe-area-inset-bottom, 0px));
+  z-index: 17;
+  display: grid;
+  width: 220px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--float);
+  animation: s-pop 0.16s ease-out;
+}
+
+.m-pop > button,
+.m-pop > a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  border-radius: 12px;
+  color: var(--ink);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.m-pop > button svg,
+.m-pop > a svg {
+  color: var(--accent-text);
+}
+
+.m-pop > [aria-current="page"] {
+  background: var(--accent-soft);
+}
+
+.m-pop-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 8px 6px 4px;
+  border-top: 1px solid var(--line);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-searchbar,
+  .m-pop {
+    animation: none;
+  }
+}
