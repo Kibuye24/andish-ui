@@ -1,0 +1,542 @@
+<title>Shina Landing Page</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Onest:wght@400;500;600&display=swap">
+<style>
+/* Layout: left-aligned page hung off one vertical trunk line; each section branches from it. The hero's setup demo is the one loud element. */
+:root {
+  --ground: #F2F5EE;
+  --surface: #FFFFFF;
+  --soft: #E3EBDD;
+  --ink: #13241C;
+  --muted: #53655A;
+  --line: #CBD6C7;
+  --leaf: #1B6B47;
+  --leaf-ink: #FFFFFF;
+  --sun: #F4B41A;
+  --sun-ink: #2A1F00;
+  --panel: #13241C;
+  --panel-ink: #EAF1E8;
+  --panel-muted: #9FB2A5;
+  --panel-line: #2D4337;
+  --panel-leaf: #63D09A;
+  --display: "Bricolage Grotesque", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --body: "Onest", "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+  --step--1: 0.875rem;
+  --step-0: 1.0625rem;
+  --step-1: 1.3rem;
+  --step-2: clamp(1.7rem, 3.4vw, 2.6rem);
+  --step-3: clamp(2.5rem, 7vw, 5.2rem);
+  --gutter: clamp(16px, 4vw, 40px);
+  --trunk: 44px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #0D1813; --surface: #15251D; --soft: #1A2D23; --ink: #EAF1E8; --muted: #9FB2A5;
+    --line: #2B3F34; --leaf: #63D09A; --leaf-ink: #06140D; --sun: #F4B41A; --sun-ink: #2A1F00;
+    --panel: #15251D; --panel-ink: #EAF1E8; --panel-muted: #9FB2A5; --panel-line: #2D4337; --panel-leaf: #63D09A;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #0D1813; --surface: #15251D; --soft: #1A2D23; --ink: #EAF1E8; --muted: #9FB2A5;
+  --line: #2B3F34; --leaf: #63D09A; --leaf-ink: #06140D; --sun: #F4B41A; --sun-ink: #2A1F00;
+  --panel: #15251D; --panel-ink: #EAF1E8; --panel-muted: #9FB2A5; --panel-line: #2D4337; --panel-leaf: #63D09A;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: var(--step-0);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, p, ul, ol { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+a { color: inherit; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 3px solid var(--sun); outline-offset: 3px; border-radius: 4px; }
+
+.wrap { max-width: 1160px; margin-inline: auto; padding-inline: var(--gutter); }
+
+/* ---------- top bar ---------- */
+.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; padding-block: 22px; }
+.mark { display: inline-flex; align-items: center; gap: 10px; font-family: var(--display); font-weight: 800; font-size: 1.5rem; letter-spacing: -0.03em; text-decoration: none; }
+.mark svg { width: 22px; height: 26px; }
+.bar nav { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 22px; font-size: var(--step--1); font-weight: 500; }
+.bar nav a { text-decoration: none; }
+.bar nav a:hover { text-decoration: underline; text-underline-offset: 4px; }
+
+.btn { display: inline-block; border: 0; border-radius: 999px; padding: 12px 22px; background: var(--leaf); color: var(--leaf-ink); font-weight: 600; text-decoration: none; }
+.btn:hover { filter: brightness(1.08); }
+.btn.sun { background: var(--sun); color: var(--sun-ink); }
+.btn.small { padding: 9px 16px; }
+
+/* ---------- hero ---------- */
+.hero { padding-block: clamp(28px, 6vw, 72px) clamp(40px, 7vw, 88px); display: grid; gap: clamp(28px, 4vw, 48px); }
+.hero h1 { font-family: var(--display); font-weight: 800; font-size: var(--step-3); line-height: 0.96; letter-spacing: -0.035em; max-width: 14ch; text-wrap: balance; }
+.hero .lede { max-width: 56ch; font-size: var(--step-1); line-height: 1.45; color: var(--muted); }
+.hero-top { display: grid; gap: 22px; }
+
+.setup { background: var(--panel); color: var(--panel-ink); border-radius: 28px; padding: clamp(20px, 3.4vw, 40px); display: grid; gap: clamp(22px, 3vw, 34px); }
+.ask { display: grid; gap: 14px; }
+.ask p { font-family: var(--display); font-weight: 600; font-size: var(--step-2); letter-spacing: -0.02em; line-height: 1.1; }
+.ask p span { color: var(--sun); }
+.picks { display: flex; flex-wrap: wrap; gap: 8px; }
+.picks button { border: 1.5px solid var(--panel-line); background: transparent; color: var(--panel-ink); border-radius: 999px; padding: 9px 16px; font-size: var(--step--1); font-weight: 500; }
+.picks button:hover { border-color: var(--panel-muted); }
+.picks button[aria-pressed="true"] { background: var(--sun); border-color: var(--sun); color: var(--sun-ink); font-weight: 600; }
+
+.built-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 20px; padding-bottom: 14px; border-bottom: 2px solid var(--panel-leaf); }
+.built-head h2 { font-family: var(--display); font-weight: 600; font-size: var(--step-1); letter-spacing: -0.01em; }
+.built-head p { font-size: var(--step--1); color: var(--panel-muted); }
+.built-head strong { color: var(--panel-ink); font-weight: 600; }
+
+.doors { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; }
+.door { padding: 20px clamp(12px, 2vw, 24px) 4px; border-left: 2px solid var(--panel-line); display: grid; gap: 12px; align-content: start; min-width: 0; }
+.door:first-child { border-left-color: var(--panel-leaf); }
+.door.on { border-left-color: var(--panel-leaf); }
+.door h3 { font-family: var(--display); font-weight: 600; font-size: 1.15rem; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.state { font-family: var(--body); font-size: 0.75rem; font-weight: 600; padding: 2px 9px; border-radius: 999px; background: var(--panel-leaf); color: #06140D; }
+.door.off .state { background: transparent; color: var(--panel-muted); border: 1px dashed var(--panel-muted); }
+.door ul { display: grid; gap: 7px; font-size: var(--step--1); }
+.door li { padding-left: 16px; position: relative; overflow-wrap: anywhere; }
+.door li::before { content: ""; position: absolute; left: 0; top: 0.62em; width: 8px; height: 2px; background: var(--panel-leaf); }
+.door.off p { font-size: var(--step--1); color: var(--panel-muted); max-width: 30ch; }
+.door li, .door.off p { animation: grow 0.45s cubic-bezier(.2,.7,.2,1) both; animation-delay: calc(var(--i, 0) * 45ms); }
+@keyframes grow { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: none; } }
+.example-note { font-size: 0.8rem; color: var(--panel-muted); }
+
+/* ---------- trunk and branches ---------- */
+.trunk { position: relative; padding-left: var(--trunk); display: grid; gap: clamp(64px, 9vw, 120px); padding-bottom: clamp(56px, 8vw, 100px); }
+.trunk::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; border-radius: 3px; background: var(--leaf); }
+.branch { position: relative; display: grid; gap: clamp(22px, 3vw, 36px); min-width: 0; }
+.branch > h2 { position: relative; font-family: var(--display); font-weight: 800; font-size: var(--step-2); line-height: 1.04; letter-spacing: -0.025em; max-width: 20ch; text-wrap: balance; }
+.branch > h2::before { content: ""; position: absolute; left: calc(var(--trunk) * -1); top: 0.5em; width: calc(var(--trunk) - 14px); height: 3px; background: var(--leaf); }
+.branch > h2::after { content: ""; position: absolute; left: -16px; top: calc(0.5em - 4px); width: 11px; height: 11px; border-radius: 50%; background: var(--sun); }
+.branch > .intro { max-width: 62ch; color: var(--muted); }
+
+/* three doors */
+.rows { display: grid; border-top: 1px solid var(--line); }
+.row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 10px 32px; padding-block: 24px; border-bottom: 1px solid var(--line); }
+.row h3 { font-family: var(--display); font-weight: 600; font-size: 1.6rem; letter-spacing: -0.02em; line-height: 1.1; }
+.row h3 small { display: block; margin-top: 6px; font-family: var(--body); font-size: var(--step--1); font-weight: 500; letter-spacing: 0; color: var(--muted); }
+.row p { max-width: 58ch; }
+.row p + p { margin-top: 10px; color: var(--muted); font-size: var(--step--1); }
+
+/* steps */
+.steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; counter-reset: step; }
+.steps li { counter-increment: step; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.steps li::before { content: counter(step); font-family: var(--display); font-weight: 800; font-size: 3.4rem; line-height: 1; color: var(--leaf); }
+.steps h3 { font-family: var(--display); font-weight: 600; font-size: 1.25rem; letter-spacing: -0.01em; }
+.steps p { color: var(--muted); max-width: 36ch; }
+
+/* stock demo */
+.till { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 22px; overflow: hidden; }
+.shelf { padding: clamp(18px, 3vw, 30px); display: grid; gap: 16px; align-content: start; background: var(--soft); min-width: 0; }
+.shelf h3, .books h3 { font-family: var(--display); font-weight: 600; font-size: 1.1rem; }
+.count { font-family: var(--display); font-weight: 800; font-size: clamp(3.4rem, 9vw, 5.6rem); line-height: 0.9; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+.count small { display: block; margin-top: 10px; font-family: var(--body); font-size: var(--step--1); font-weight: 500; letter-spacing: 0; color: var(--muted); }
+.shelf .acts { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.shelf button[disabled] { opacity: 0.45; cursor: not-allowed; filter: none; }
+.link { border: 0; background: none; padding: 4px; text-decoration: underline; text-underline-offset: 4px; font-size: var(--step--1); }
+.books { padding: clamp(18px, 3vw, 30px); display: grid; gap: 14px; align-content: start; min-width: 0; }
+.scroll { overflow-x: auto; }
+.books table { width: 100%; border-collapse: collapse; font-size: var(--step--1); font-variant-numeric: tabular-nums; }
+.books th { text-align: left; font-weight: 500; color: var(--muted); padding: 0 12px 8px 0; white-space: nowrap; }
+.books td { padding: 9px 12px 9px 0; border-top: 1px solid var(--line); white-space: nowrap; }
+.books td:last-child, .books th:last-child { text-align: right; padding-right: 0; }
+.books .empty td { color: var(--muted); white-space: normal; text-align: left; }
+.total { display: flex; justify-content: space-between; gap: 16px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.status { font-size: var(--step--1); color: var(--muted); min-height: 1.5em; }
+
+/* shared pieces */
+.shared { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px 48px; }
+.shared li { display: grid; gap: 6px; padding-top: 16px; border-top: 3px solid var(--ink); min-width: 0; }
+.shared h3 { font-family: var(--display); font-weight: 600; font-size: 1.25rem; letter-spacing: -0.01em; }
+.shared p { color: var(--muted); max-width: 46ch; }
+
+/* plans */
+.sizer { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.sizer span { font-weight: 500; }
+.seg { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border-radius: 999px; background: var(--soft); }
+.seg button { border: 0; background: transparent; border-radius: 999px; padding: 8px 16px; font-size: var(--step--1); font-weight: 500; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--ground); font-weight: 600; }
+.plans { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.plan { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 26px 24px; display: grid; gap: 16px; min-width: 0; }
+.plan.mid { background: var(--panel); color: var(--panel-ink); border-color: var(--panel); }
+.plan h3 { font-family: var(--display); font-weight: 800; font-size: 1.9rem; letter-spacing: -0.03em; line-height: 1; }
+.plan .for { color: var(--muted); font-size: var(--step--1); }
+.plan.mid .for { color: var(--panel-muted); }
+.plan ul { display: grid; gap: 8px; font-size: var(--step--1); }
+.plan li { padding-left: 18px; position: relative; }
+.plan li::before { content: ""; position: absolute; left: 0; top: 0.6em; width: 9px; height: 3px; background: var(--leaf); }
+.plan.mid li::before { background: var(--panel-leaf); }
+.plan .size { padding-top: 14px; border-top: 1px solid var(--line); display: grid; gap: 4px; font-size: var(--step--1); }
+.plan.mid .size { border-top-color: var(--panel-line); }
+.plan .size b { font-weight: 600; }
+.plan .price { font-weight: 600; }
+.fine { font-size: var(--step--1); color: var(--muted); max-width: 70ch; }
+
+/* close */
+.close { background: var(--sun); color: var(--sun-ink); border-radius: 28px; padding: clamp(28px, 5vw, 56px); display: grid; gap: 20px; justify-items: start; margin-bottom: clamp(40px, 6vw, 72px); }
+.close h2 { font-family: var(--display); font-weight: 800; font-size: var(--step-2); letter-spacing: -0.025em; line-height: 1.04; max-width: 22ch; text-wrap: balance; }
+.close p { max-width: 54ch; }
+.close .btn { background: var(--sun-ink); color: #FFF4D2; }
+footer { padding-block: 0 40px; font-size: var(--step--1); color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px 24px; justify-content: space-between; }
+
+@media (max-width: 860px) {
+  :root { --trunk: 22px; }
+  .doors { grid-template-columns: 1fr; gap: 18px; }
+  .door { padding-top: 4px; }
+  .row, .till, .shared { grid-template-columns: 1fr; }
+  .steps, .plans { grid-template-columns: 1fr; }
+  .branch > h2::after { left: -12px; width: 9px; height: 9px; top: calc(0.5em - 3px); }
+  .branch > h2::before { width: calc(var(--trunk) - 10px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .door li, .door.off p { animation: none; }
+  html { scroll-behavior: auto; }
+}
+html { scroll-behavior: smooth; }
+</style>
+
+<div class="wrap">
+  <header class="bar">
+    <a class="mark" href="#top" id="top" aria-label="Shina home">
+      <svg viewBox="0 0 22 26" fill="none" aria-hidden="true"><path d="M11 26V2M11 14L3 7M11 9l8-6M11 20l7-5" stroke="var(--leaf)" stroke-width="3" stroke-linecap="round"/></svg>
+      shina
+    </a>
+    <nav aria-label="Page">
+      <a href="#doors">What you get</a>
+      <a href="#setup">How setup works</a>
+      <a href="#plans">Plans</a>
+      <a class="btn small" href="#try">Try the setup</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" id="try">
+      <div class="hero-top">
+        <h1>Say what your business does. Fundi builds the rest.</h1>
+        <p class="lede">Shina is one account for your website, your online store and your back office. Fundi, the setup assistant, asks how you work and builds each one to fit.</p>
+      </div>
+
+      <div class="setup">
+        <div class="ask">
+          <p>I run a <span id="biz-word">bakery</span>.</p>
+          <div class="picks" role="group" aria-label="Pick a business to see what Fundi sets up" id="picks"></div>
+        </div>
+        <div>
+          <div class="built-head">
+            <h2 id="built-title">Fundi sets up Tamu Bakes</h2>
+            <p>Fits the <strong id="built-plan">Operations</strong> plan</p>
+          </div>
+          <div class="doors" id="doors-out" aria-live="polite"></div>
+        </div>
+        <p class="example-note">These are example setups. Yours comes from your own answers, and you can change anything afterwards.</p>
+      </div>
+    </section>
+
+    <div class="trunk">
+      <section class="branch" id="doors">
+        <h2>Three doors into one account</h2>
+        <p class="intro">Come in for the one you need today. The others stay switched off until you want them, and switching one on keeps your login, your files and your data.</p>
+        <div class="rows">
+          <div class="row">
+            <h3>Sites<small>Websites, blogs and newsrooms</small></h3>
+            <div>
+              <p>Pages designed around your business, with content sections built for what you publish. A sports blog gets authors and match reports. A careers page gets open positions.</p>
+              <p>Sign-up forms feed your newsletter list, so you can write to readers without a second tool.</p>
+            </div>
+          </div>
+          <div class="row">
+            <h3>Store<small>Sell online, paid by M-Pesa</small></h3>
+            <div>
+              <p>A storefront on your own link, with your catalogue, sizes and options, M-Pesa checkout and an order list. It sits inside your website, so merchandise is a page, not another subscription.</p>
+              <p>Stock counts update with every order.</p>
+            </div>
+          </div>
+          <div class="row">
+            <h3>Operations<small>Stock, purchases, production and books</small></h3>
+            <div>
+              <p>The back office for businesses that make, pack or stock what they sell. Recipes, suppliers, packaging, a till and books that add up, with tables shaped to your trade.</p>
+              <p>KRA eTIMS submission is in development and is not live yet.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="branch" id="setup">
+        <h2>Setup is a conversation</h2>
+        <ol class="steps">
+          <li>
+            <h3>Describe your business</h3>
+            <p>Tell Fundi what you sell, how you sell it and who works with you. Share a site you like and Fundi borrows its look.</p>
+          </li>
+          <li>
+            <h3>Check the proposal</h3>
+            <p>Fundi shows the pages, tables and fields it plans to create. Rename, add or remove anything before it is built.</p>
+          </li>
+          <li>
+            <h3>Go live and keep editing</h3>
+            <p>Your site and tools open on your own link. Ask Fundi for a change in plain words whenever the business changes.</p>
+          </li>
+        </ol>
+      </section>
+
+      <section class="branch" id="stock">
+        <h2>Sell one, and the shelf drops by one</h2>
+        <p class="intro">The store and the back office read the same catalogue. Money and stock are handled by fixed, tested rules, not written fresh for each business. Try a sale.</p>
+        <div class="till">
+          <div class="shelf">
+            <h3>Black forest cake, 1 kg</h3>
+            <p class="count"><span id="stock-n">12</span><small>on the shelf</small></p>
+            <div class="acts">
+              <button class="btn" id="sell" type="button">Sell one cake</button>
+              <button class="link" id="restock" type="button">Restock to 12</button>
+            </div>
+            <p class="status" id="stock-status" aria-live="polite">Example data for a bakery.</p>
+          </div>
+          <div class="books">
+            <h3>Sales today</h3>
+            <div class="scroll">
+              <table>
+                <thead><tr><th>Sale</th><th>Paid by</th><th>Stock after</th><th>KES</th></tr></thead>
+                <tbody id="sales-rows"><tr class="empty"><td colspan="4">No sales yet. Sell a cake to post one.</td></tr></tbody>
+              </table>
+            </div>
+            <p class="total"><span>Received by M-Pesa</span><span id="sales-total">KES 0</span></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="branch" id="shared">
+        <h2>What every account shares</h2>
+        <ul class="shared">
+          <li>
+            <h3>One file library</h3>
+            <p>Photos, logos and documents in one place, usable on your site, in your store and on your records.</p>
+          </li>
+          <li>
+            <h3>Posters, PDFs and documents</h3>
+            <p>Ask Fundi for a price list, an event poster or a quotation. It comes out in your colours and type and is saved to your files.</p>
+          </li>
+          <li>
+            <h3>One wallet for AI work</h3>
+            <p>Building, redesigning and generating documents all draw on the same credits. Your plan includes an allowance and you can top up.</p>
+          </li>
+          <li>
+            <h3>One bill</h3>
+            <p>A website with a store is one subscription. You pay for what is switched on and how big your team is.</p>
+          </li>
+        </ul>
+      </section>
+
+      <section class="branch" id="plans">
+        <h2>Pick what you use, then how big you are</h2>
+        <div class="sizer">
+          <span id="size-label">Team size</span>
+          <div class="seg" role="group" aria-labelledby="size-label" id="sizes">
+            <button type="button" data-size="solo" aria-pressed="true">Solo</button>
+            <button type="button" data-size="team" aria-pressed="false">Team</button>
+            <button type="button" data-size="org" aria-pressed="false">Organisation</button>
+          </div>
+        </div>
+        <div class="plans">
+          <article class="plan">
+            <h3>Sites</h3>
+            <p class="for">Blogs, company websites, portfolios and newsrooms.</p>
+            <ul>
+              <li>Website designed by Fundi</li>
+              <li>Content sections built for what you publish</li>
+              <li>Forms and newsletter list</li>
+              <li>File library</li>
+            </ul>
+            <div class="size"><b data-out="seats"></b><span data-out="usage"></span><span data-out="extras"></span></div>
+            <p class="price">Price set before launch</p>
+          </article>
+          <article class="plan mid">
+            <h3>Store</h3>
+            <p class="for">Anyone selling online, from merchandise to a full shop.</p>
+            <ul>
+              <li>Everything in Sites</li>
+              <li>Catalogue with sizes and options</li>
+              <li>M-Pesa checkout and orders</li>
+              <li>Stock counts that follow sales</li>
+            </ul>
+            <div class="size"><b data-out="seats"></b><span data-out="usage"></span><span data-out="extras"></span></div>
+            <p class="price">Price set before launch</p>
+          </article>
+          <article class="plan">
+            <h3>Operations</h3>
+            <p class="for">Businesses that make, pack or stock what they sell.</p>
+            <ul>
+              <li>Everything in Store</li>
+              <li>Purchases, suppliers and expenses</li>
+              <li>Recipes, production and packaging</li>
+              <li>Till and books</li>
+            </ul>
+            <div class="size"><b data-out="seats"></b><span data-out="usage"></span><span data-out="extras"></span></div>
+            <p class="price">Price set before launch</p>
+          </article>
+        </div>
+        <p class="fine">A newsroom with forty editors and a one-person blog are both on Sites. They differ in team size, so that is the second choice, not a different product.</p>
+      </section>
+    </div>
+
+    <section class="close">
+      <h2>Start with one sentence about your business.</h2>
+      <p>Pick a business in the demo and see what Fundi would set up. Sign-up opens when Shina launches.</p>
+      <a class="btn" href="#try">Try the setup</a>
+    </section>
+  </main>
+
+  <footer>
+    <span>Shina, by Nexus Labs. Working name.</span>
+    <span>Website, store and back office in one account.</span>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var OFF_NOTE = "Not needed for this business. Switch it on the day you are.";
+  var setups = [
+    { id: "bakery", label: "Bakery", word: "bakery", name: "Tamu Bakes", plan: "Operations",
+      sites: ["Home page", "Cake menu", "Custom cake orders", "Find us and contact"],
+      store: ["Cake packages by size", "M-Pesa checkout", "Delivery zones and fees", "Order list"],
+      ops: ["Recipes with ingredient costs", "Flour, sugar and butter stock", "Packaging", "Suppliers", "Daily sales"] },
+    { id: "blog", label: "Sports blog", word: "sports blog", name: "Touchline KE", plan: "Sites",
+      sites: ["Home page", "Match reports", "Authors, with a field for each writer", "Fixtures and results", "Newsletter sign-up"],
+      store: null, ops: null },
+    { id: "news", label: "Newsroom", word: "newsroom", name: "The County Dispatch", plan: "Sites, at Organisation size",
+      sites: ["Front page and sections", "Reporter profiles", "Careers, with open positions", "Editor approval before publishing", "Scheduled publishing", "Newsletter sign-up"],
+      store: null, ops: null },
+    { id: "merch", label: "Band with merch", word: "band that sells merch", name: "Mawingu Sound", plan: "Store",
+      sites: ["Home page", "Tour dates", "Gallery", "Mailing list sign-up"],
+      store: ["T-shirts with sizes and colours", "M-Pesa checkout", "Order list", "Stock count per size"],
+      ops: null },
+    { id: "butchery", label: "Butchery", word: "butchery", name: "Kwa Otis Butchery", plan: "Operations",
+      sites: ["Home page", "Price list per kilo", "Find us and contact"],
+      store: ["Order ahead for pickup", "M-Pesa checkout"],
+      ops: ["Cut-ups from a carcass into cuts", "Stock by weight", "Suppliers and purchases", "Till", "Daily sales"] }
+  ];
+
+  var picks = document.getElementById("picks");
+  var out = document.getElementById("doors-out");
+  var title = document.getElementById("built-title");
+  var plan = document.getElementById("built-plan");
+  var word = document.getElementById("biz-word");
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+
+  function door(name, items, start) {
+    var on = !!items;
+    var d = el("div", "door " + (on ? "on" : "off"));
+    var h = el("h3", null, name + " ");
+    h.appendChild(el("span", "state", on ? "On" : "Off"));
+    d.appendChild(h);
+    if (on) {
+      var ul = el("ul");
+      items.forEach(function (t, i) {
+        var li = el("li", null, t);
+        li.style.setProperty("--i", start + i);
+        ul.appendChild(li);
+      });
+      d.appendChild(ul);
+    } else {
+      var p = el("p", null, OFF_NOTE);
+      p.style.setProperty("--i", start);
+      d.appendChild(p);
+    }
+    return d;
+  }
+
+  function show(s) {
+    word.textContent = s.word;
+    title.textContent = "Fundi sets up " + s.name;
+    plan.textContent = s.plan;
+    out.textContent = "";
+    var a = s.sites.length, b = s.store ? s.store.length : 1;
+    out.appendChild(door("Sites", s.sites, 0));
+    out.appendChild(door("Store", s.store, a));
+    out.appendChild(door("Operations", s.ops, a + b));
+    Array.prototype.forEach.call(picks.children, function (btn) {
+      btn.setAttribute("aria-pressed", btn.dataset.id === s.id ? "true" : "false");
+    });
+  }
+
+  setups.forEach(function (s) {
+    var b = el("button", null, s.label);
+    b.type = "button";
+    b.id = "pick-" + s.id;
+    b.dataset.id = s.id;
+    b.addEventListener("click", function () { show(s); });
+    picks.appendChild(b);
+  });
+  show(setups[0]);
+
+  /* stock demo */
+  var PRICE = 2500, FULL = 12;
+  var stock = FULL, sold = 0;
+  var stockN = document.getElementById("stock-n");
+  var rows = document.getElementById("sales-rows");
+  var total = document.getElementById("sales-total");
+  var status = document.getElementById("stock-status");
+  var sell = document.getElementById("sell");
+  function kes(n) { return n.toLocaleString("en-KE"); }
+  function pad(n) { return ("0000" + n).slice(-4); }
+  function emptyRow() {
+    var tr = el("tr", "empty"), td = el("td", null, "No sales yet. Sell a cake to post one.");
+    td.colSpan = 4; tr.appendChild(td); return tr;
+  }
+  sell.addEventListener("click", function () {
+    if (stock === 0) return;
+    stock -= 1; sold += 1;
+    if (sold === 1) rows.textContent = "";
+    var tr = el("tr");
+    ["SAL-" + pad(sold), "M-Pesa", String(stock), kes(PRICE)].forEach(function (t) { tr.appendChild(el("td", null, t)); });
+    rows.insertBefore(tr, rows.firstChild);
+    while (rows.children.length > 5) rows.removeChild(rows.lastChild);
+    stockN.textContent = stock;
+    total.textContent = "KES " + kes(sold * PRICE);
+    if (stock === 0) { sell.disabled = true; status.textContent = "Sold out. The store page now shows this cake as unavailable."; }
+    else if (stock <= 3) { status.textContent = "Running low. Fundi can remind you to bake more."; }
+    else { status.textContent = "Sale posted. Stock and takings moved together."; }
+  });
+  document.getElementById("restock").addEventListener("click", function () {
+    stock = FULL; sold = 0; sell.disabled = false;
+    stockN.textContent = stock; total.textContent = "KES 0";
+    rows.textContent = ""; rows.appendChild(emptyRow());
+    status.textContent = "Restocked. Example data for a bakery.";
+  });
+
+  /* plan sizes */
+  var sizes = {
+    solo: { seats: "1 to 2 people", usage: "Starter storage and AI credits", extras: "All plan features included" },
+    team: { seats: "Up to 10 people", usage: "More storage and AI credits", extras: "Adds roles, permissions and scheduled publishing" },
+    org: { seats: "Seat packs for larger teams", usage: "Largest allowance, with top-ups", extras: "Adds approval workflow, audit log, single sign-on and priority support" }
+  };
+  var seg = document.getElementById("sizes");
+  function setSize(key) {
+    var s = sizes[key];
+    Array.prototype.forEach.call(seg.children, function (b) {
+      b.setAttribute("aria-pressed", b.dataset.size === key ? "true" : "false");
+    });
+    ["seats", "usage", "extras"].forEach(function (k) {
+      Array.prototype.forEach.call(document.querySelectorAll('[data-out="' + k + '"]'), function (n) { n.textContent = s[k]; });
+    });
+  }
+  Array.prototype.forEach.call(seg.children, function (b) {
+    b.id = "size-" + b.dataset.size;
+    b.addEventListener("click", function () { setSize(b.dataset.size); });
+  });
+  setSize("solo");
+})();
+</script>
