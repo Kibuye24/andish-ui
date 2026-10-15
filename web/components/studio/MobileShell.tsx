@@ -1,16 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { ChevronRight, Ellipsis, LayoutGrid, Plus, Search, X, type LucideIcon } from "lucide-react";
+import { Bell, ChevronRight, Ellipsis, LayoutGrid, Plus, Search, X, type LucideIcon } from "lucide-react";
 import type { Role, SectionDef, SectionId, TabDef } from "@/lib/studio-data";
 import Assistant from "./Assistant";
 import type { Command } from "./CommandPalette";
 import Sheet from "./Sheet";
-import type { Go } from "./views";
+import { FilterSelect, type FilterGroup, type Go } from "./views";
 
 const BAR_SLOTS = 4;
-/** Columns in the More grid: the bar's slots plus More itself, so the grid lines up with the bar. */
-const GRID_COLS = BAR_SLOTS + 1;
+/** The expanded panel is a square of this many tiles across. */
+const MORE_COLS = 3;
 
 type Props = {
   workspace: string;
@@ -46,6 +46,10 @@ type Props = {
   setTab: (id: string) => void;
   /** The person's avatar and menu: settings, theme, and the way back from a preview. */
   account: ReactNode;
+  /** Unread notices, shown on the bell in the header. */
+  alerts: number;
+  /** The filters for the list on screen, shown in the tab row so they scroll with the tabs. */
+  filters?: { groups: FilterGroup[]; values: Record<string, string | null>; onChange: (group: string, value: string | null) => void };
   children: ReactNode;
 };
 
@@ -89,10 +93,15 @@ export default function MobileShell(p: Props) {
     if (el && on) el.scrollTo({ left: on.offsetLeft - el.clientWidth / 2 + on.offsetWidth / 2, behavior: "smooth" });
   }, [p.activeTab?.id, p.current.id]);
 
-  const inBar = p.visible.slice(0, BAR_SLOTS);
-  const inMore = p.visible.slice(BAR_SLOTS);
-  const moreActive = inMore.some((s) => s.id === p.current.id);
-  const moreBadge = inMore.reduce((n, s) => n + (p.badges[s.id] ?? 0), 0);
+  // The inbox lives on the bell in the header, so the bar and the panel hold every other section.
+  const sections_ = p.visible.filter((s) => s.id !== "inbox");
+  const inBar = sections_.slice(0, BAR_SLOTS);
+  const moreActive = sections_.some((s) => s.id === p.current.id);
+  const moreBadge = sections_.slice(BAR_SLOTS).reduce((n, s) => n + (p.badges[s.id] ?? 0), 0);
+  const panelRows = Math.ceil(sections_.length / MORE_COLS);
+  // The panel replaces the bar, so it reads from the bottom: the bar's first sections on the bottom row,
+  // then the rest above, and the ones the bar had no room for on top.
+  const panelOrder = Array.from({ length: panelRows }, (_, r) => sections_.slice(r * MORE_COLS, (r + 1) * MORE_COLS)).reverse().flat();
 
   // Matches from the rest of the studio. On a list these sit above the filtered list.
   const found = useMemo(() => {
@@ -122,7 +131,7 @@ export default function MobileShell(p: Props) {
     <div
       className={`studio is-mobile${more ? " is-more" : ""}`}
       data-theme={p.dark ? "dark" : "light"}
-      style={{ ...p.themeStyle, "--more-rows": Math.ceil(inMore.length / GRID_COLS) } as CSSProperties}
+      style={{ ...p.themeStyle, "--more-rows": panelRows } as CSSProperties}
     >
       <header className="m-top">
         {searching ? (
@@ -157,6 +166,12 @@ export default function MobileShell(p: Props) {
               <button type="button" className="m-top-search" aria-label="Search" onClick={() => setSearching(true)}>
                 <Search size={19} />
               </button>
+              {p.visible.some((s) => s.id === "inbox") && (
+                <button type="button" className="m-top-search m-bell" aria-label={p.alerts ? `Notifications, ${p.alerts} new` : "Notifications"} onClick={() => leave(() => p.go("inbox"))}>
+                  <Bell size={19} aria-hidden="true" />
+                  {p.alerts ? <b>{p.alerts}</b> : null}
+                </button>
+              )}
               {p.account}
             </div>
           </div>
@@ -167,13 +182,15 @@ export default function MobileShell(p: Props) {
         </div>
         {p.tabs.length > 0 && (
           <div className={`m-tabbar${few ? " is-few" : ""}${edges.overflow && !few ? " is-overflow" : ""}${edges.start ? "" : " is-scrolled"}${edges.end ? " is-end" : ""}`}>
-            <div className="m-tabs" role="tablist" aria-label={p.current.label} ref={strip}>
-              {p.tabs.map((t) => (
-                <button key={t.id} type="button" role="tab" aria-selected={p.activeTab?.id === t.id} onClick={() => leave(() => p.setTab(t.id))}>
-                  {t.label}
-                  {p.tabBadges[t.id] ? <b>{p.tabBadges[t.id]}</b> : null}
-                </button>
-              ))}
+            <div className="m-tabs" ref={strip}>
+              <div role="tablist" aria-label={p.current.label} className="m-tabs-tabs">
+                {p.tabs.map((t) => (
+                  <button key={t.id} type="button" role="tab" aria-selected={p.activeTab?.id === t.id} onClick={() => leave(() => p.setTab(t.id))}>
+                    {t.label}
+                    {p.tabBadges[t.id] ? <b>{p.tabBadges[t.id]}</b> : null}
+                  </button>
+                ))}
+              </div>
             </div>
             {edges.overflow && !few && (
               <button type="button" className="m-tabs-all" onClick={() => setAllTabs(true)} aria-label={`See all ${p.tabs.length} ${p.current.label.toLowerCase()} views`}>
@@ -182,6 +199,15 @@ export default function MobileShell(p: Props) {
                 {tabBadgeTotal ? <i className="s-dot" aria-hidden="true" /> : null}
               </button>
             )}
+          </div>
+        )}
+        {/* Filters for the list on screen get their own row under the tabs. */}
+        {p.filters && p.filters.groups.length > 0 && (
+          <div className="m-filterbar" role="group" aria-label="Filters">
+            {p.filters.groups.map((g) => {
+              const value = p.filters?.values[g.label] ?? null;
+              return <FilterSelect key={g.label} group={g} value={value} onChange={(v) => p.filters?.onChange(g.label, v)} />;
+            })}
           </div>
         )}
       </header>
@@ -211,24 +237,29 @@ export default function MobileShell(p: Props) {
 
       {more && <button type="button" className="m-pop-catch" aria-label="Close menu" onClick={() => setMore(false)} />}
 
-      {/* The bar grows upward to show the rest of the sections; the ones already in it stay put. */}
+      {/* The bar stays where it is; the panel grows up from it with every section as a tile. */}
       <div className="m-dock">
         <div className={`m-dock-panel${more ? " is-open" : ""}`}>
           <div className="m-more" id="m-more" inert={!more}>
-            <div className="m-more-inner" role="menu" aria-label="More sections">
-              {inMore.map((s) => {
-                const Icon = p.icons[s.id];
-                const badge = p.badges[s.id];
-                return (
-                  <button key={s.id} type="button" role="menuitem" aria-current={p.current.id === s.id ? "page" : undefined} onClick={() => leave(() => p.go(s.id))}>
-                    <span className="m-bar-icon">
-                      <Icon size={21} aria-hidden="true" />
-                      {badge ? <b>{badge}</b> : null}
-                    </span>
-                    {s.id === "inbox" ? "Alerts" : label(s)}
-                  </button>
-                );
-              })}
+            <div className="m-more-inner" role="menu" aria-label="All sections">
+              <button type="button" className="m-more-close" aria-label="Close" onClick={() => setMore(false)}>
+                <X size={18} aria-hidden="true" />
+              </button>
+              <div className="m-more-grid">
+                {panelOrder.map((s) => {
+                  const Icon = p.icons[s.id];
+                  const badge = p.badges[s.id];
+                  return (
+                    <button key={s.id} type="button" role="menuitem" aria-current={p.current.id === s.id ? "page" : undefined} onClick={() => leave(() => p.go(s.id))}>
+                      <span className="m-more-icon">
+                        <Icon size={28} aria-hidden="true" />
+                        {badge ? <b>{badge}</b> : null}
+                      </span>
+                      <span className="m-more-label">{label(s)}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
           <nav className="m-bar" aria-label="Studio">
@@ -245,13 +276,13 @@ export default function MobileShell(p: Props) {
                 </button>
               );
             })}
-            {inMore.length > 0 && (
+            {sections_.length > BAR_SLOTS && (
               <button type="button" aria-current={moreActive && !more ? "page" : undefined} aria-controls="m-more" aria-expanded={more} onClick={() => setMore(!more)}>
                 <span className="m-bar-icon">
-                  {more ? <X size={21} aria-hidden="true" /> : <Ellipsis size={21} aria-hidden="true" />}
+                  <Ellipsis size={21} aria-hidden="true" />
                   {moreBadge && !more ? <b>{moreBadge}</b> : null}
                 </span>
-                {more ? "Close" : "More"}
+                More
               </button>
             )}
           </nav>

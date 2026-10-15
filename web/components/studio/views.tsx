@@ -454,6 +454,7 @@ export function Agenda({
         <FilterRow
           label="Show bookings for"
           groups={[{ label: "Barber", options: resources.map((r) => r.name) }]}
+          chips
           values={{ Barber: picked ? who(picked) : null }}
           onChange={(_, v) => setPicked(resources.find((r) => r.name === v)?.id ?? null)}
         />
@@ -509,19 +510,47 @@ export function Agenda({
 export type FilterGroup = { label: string; options: string[] };
 const PILLS_MAX = 4;
 
+/** One filter as a dropdown chip, the same look on a phone's tab row and in the table toolbar. */
+export function FilterSelect({ group, value, onChange }: { group: FilterGroup; value: string | null; onChange: (value: string | null) => void }) {
+  return (
+    <label className={`s-filter-select${value ? " is-set" : ""}`}>
+      <span>
+        {group.label}: <strong>{value ?? "All"}</strong>
+      </span>
+      <ChevronDown size={14} aria-hidden="true" />
+      <select aria-label={group.label} value={value ?? ""} onChange={(e) => onChange(e.target.value || null)}>
+        <option value="">All</option>
+        {group.options.map((o) => (
+          <option key={o} value={o}>
+            {o}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+/** The filters a table offers, as groups for FilterRow and the phone tab row. */
+export function groupsOf(def: TableDef): FilterGroup[] {
+  return [...(def.filters ? [{ label: "Status", options: def.filters }] : []), ...(def.moreFilters ?? [])];
+}
+
 export function FilterRow({
   groups,
   values,
   onChange,
   label,
+  chips = false,
 }: {
   groups: FilterGroup[];
   values: Record<string, string | null>;
   onChange: (group: string, value: string | null) => void;
   label: string;
+  /** Always dropdown chips, never pills. The phone uses this everywhere. */
+  chips?: boolean;
 }) {
   // Pills only make sense for one short list. Several filters, or a long list, become dropdowns.
-  const asPills = (g: FilterGroup) => groups.length === 1 && g.options.length <= PILLS_MAX;
+  const asPills = (g: FilterGroup) => !chips && groups.length === 1 && g.options.length <= PILLS_MAX;
   return (
     <div className="s-chips" role="group" aria-label={label}>
       {groups.map((g) => {
@@ -540,22 +569,7 @@ export function FilterRow({
             </Fragment>
           );
         }
-        return (
-          <label key={g.label} className={`s-filter-select${value ? " is-set" : ""}`}>
-            <span>
-              {g.label}: <strong>{value ?? "All"}</strong>
-            </span>
-            <ChevronDown size={14} aria-hidden="true" />
-            <select aria-label={g.label} value={value ?? ""} onChange={(e) => onChange(g.label, e.target.value || null)}>
-              <option value="">All</option>
-              {g.options.map((o) => (
-                <option key={o} value={o}>
-                  {o}
-                </option>
-              ))}
-            </select>
-          </label>
-        );
+        return <FilterSelect key={g.label} group={g} value={value} onChange={(v) => onChange(g.label, v)} />;
       })}
     </div>
   );
@@ -569,10 +583,18 @@ export function DataTable({
   onOpen,
   query: outer,
   marks = {},
+  picked: pickedProp,
+  onPick,
+  filtersInBar = false,
 }: {
   def: TableDef;
   /** Unread notices on rows, by the row's first cell. */
   marks?: Record<string, string>;
+  /** Filters owned by the screen, so they can sit in the phone's tab row. */
+  picked?: Record<string, string | null>;
+  onPick?: (group: string, value: string | null) => void;
+  /** The filters are shown elsewhere (the phone tab row), so the table skips its own row. */
+  filtersInBar?: boolean;
   onAction?: () => void;
   /** Opens one row on its own page. */
   onOpen?: (row: string[]) => void;
@@ -581,8 +603,10 @@ export function DataTable({
 }) {
   const [own, setQuery] = useState("");
   const query = outer ?? own;
-  const [picked, setPicked] = useState<Record<string, string | null>>({});
-  const groups: FilterGroup[] = [...(def.filters ? [{ label: "Status", options: def.filters }] : []), ...(def.moreFilters ?? [])];
+  const [ownPicked, setOwnPicked] = useState<Record<string, string | null>>({});
+  const picked = pickedProp ?? ownPicked;
+  const setPicked = (group: string, value: string | null) => (onPick ? onPick(group, value) : setOwnPicked((p) => ({ ...p, [group]: value })));
+  const groups: FilterGroup[] = groupsOf(def);
 
   const rows = useMemo(() => {
     // Every word has to match somewhere in the row; spaces and dashes are ignored, so "mpesa" finds "M-Pesa".
@@ -605,7 +629,7 @@ export function DataTable({
             <input type="search" placeholder="Search this list" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search this list" />
           </label>
         )}
-        {groups.length > 0 && <FilterRow groups={groups} values={picked} onChange={(g, v) => setPicked((p) => ({ ...p, [g]: v }))} label="Filters" />}
+        {groups.length > 0 && !filtersInBar && <FilterRow groups={groups} values={picked} onChange={setPicked} label="Filters" />}
         {def.action && (
           <button type="button" className="s-btn is-primary s-push" onClick={onAction}>
             <Plus size={15} aria-hidden="true" />

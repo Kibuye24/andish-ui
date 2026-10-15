@@ -32,7 +32,7 @@ import UserMenu from "./UserMenu";
 import { useStudioTheme } from "./useStudioTheme";
 import { accentStyle } from "@/lib/studio-themes";
 import { bookingFrom, fileNodeFrom, forms, type Values } from "@/lib/studio-forms";
-import { Agenda, Appearance, BookingActions, BookingFacts, CalendarDay, DataTable, MyDay, Pages, type PageItem, ReportView, SetupList, ToConfirm, Today, WorkspaceSettings } from "./views";
+import { Agenda, Appearance, BookingActions, BookingFacts, CalendarDay, DataTable, groupsOf, MyDay, Pages, type PageItem, ReportView, SetupList, ToConfirm, Today, WorkspaceSettings } from "./views";
 
 const icons: Record<SectionId, LucideIcon> = {
   today: Sunrise,
@@ -87,6 +87,9 @@ export default function StudioApp({ forceMobile = false }: { forceMobile?: boole
   const [query, setQuery] = useState("");
   const [detail, setDetail] = useState<{ key: string; id: string } | null>(null);
   const [read, setRead] = useState<string[]>([]);
+  // Filter choices per list ("section/tab"), so they survive moving between tabs.
+  const [picks, setPicks] = useState<Record<string, Record<string, string | null>>>({});
+  const pickFilter = (key: string, group: string, value: string | null) => setPicks((p) => ({ ...p, [key]: { ...(p[key] ?? {}), [group]: value } }));
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(
@@ -121,6 +124,8 @@ export default function StudioApp({ forceMobile = false }: { forceMobile?: boole
   }, [current, role, bookings]);
 
   const activeTab = tabs.find((t) => t.id === tab) ?? tabs[0];
+  const tableKey = activeTab ? `${current.id}/${activeTab.id}` : "";
+  const listGroups = activeTab?.table && !detail ? groupsOf(activeTab.table) : [];
 
   // Unread notices on this screen: counted on each tab, and shown on the rows they are about.
   const unreadHere = myNotices.filter((n) => n.source === current.id && !read.includes(n.id));
@@ -375,6 +380,9 @@ export default function StudioApp({ forceMobile = false }: { forceMobile?: boole
           def={def}
           query={query}
           marks={marks}
+          picked={picks[key] ?? {}}
+          onPick={(g, v) => pickFilter(key, g, v)}
+          filtersInBar={mobile}
           onOpen={
             def.detail
               ? (row) => {
@@ -443,6 +451,8 @@ export default function StudioApp({ forceMobile = false }: { forceMobile?: boole
         listName={activeTab?.table && !detail ? activeTab.label : undefined}
         activeTab={activeTab}
         tabBadges={tabBadges}
+        alerts={unreadNotices}
+        filters={listGroups.length ? { groups: listGroups, values: picks[tableKey] ?? {}, onChange: (g, v) => pickFilter(tableKey, g, v) } : undefined}
         action={detail ? undefined : action}
         onAction={actionKey ? () => openForm(actionKey) : undefined}
         overlay={layer}
