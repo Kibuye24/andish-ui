@@ -1,16 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
-import { CalendarDays, ExternalLink, Folder, Globe, Moon, Search, Settings, ShoppingBag, Sun, Sunrise, TrendingUp, Users, Wallet, type LucideIcon } from "lucide-react";
+import { Bell, CalendarDays, Eye, ExternalLink, Folder, Globe, Settings, ShoppingBag, Sunrise, TrendingUp, Users, Wallet, type LucideIcon } from "lucide-react";
 import {
   bookings as seedBookings,
   claims,
   files as seedFiles,
+  notices,
   resources,
   sections,
   workspace,
   type BookingStatus,
   type FileNode,
+  type Notice,
   type Capability,
   type Role,
   type SectionDef,
@@ -18,12 +20,15 @@ import {
   type TabDef,
 } from "@/lib/studio-data";
 import Assistant from "./Assistant";
-import CommandPalette, { type Command } from "./CommandPalette";
+import type { Command } from "./CommandPalette";
 import Files from "./Files";
 import FormPanel, { Toast } from "./FormPanel";
 import MobileShell from "./MobileShell";
+import Notifications from "./Notifications";
 import RecordView from "./RecordView";
 import ThemeSettings from "./ThemeSettings";
+import TopSearch from "./TopSearch";
+import UserMenu from "./UserMenu";
 import { useStudioTheme } from "./useStudioTheme";
 import { accentStyle } from "@/lib/studio-themes";
 import { bookingFrom, fileNodeFrom, forms, type Values } from "@/lib/studio-forms";
@@ -38,11 +43,12 @@ const icons: Record<SectionId, LucideIcon> = {
   website: Globe,
   files: Folder,
   reports: TrendingUp,
+  inbox: Bell,
   settings: Settings,
 };
 
 // Rail order: the day, then running the business, then building it, then reviewing it.
-const railGroups: SectionId[][] = [["today"], ["bookings", "store", "payments", "customers"], ["website", "files"], ["reports"]];
+const railGroups: SectionId[][] = [["today", "inbox"], ["bookings", "store", "payments", "customers"], ["website", "files"], ["reports"]];
 
 const PHONE = "(max-width: 860px)";
 
@@ -66,7 +72,6 @@ export default function StudioApp({ forceMobile = false }: { forceMobile?: boole
   const dark = mode === "dark";
   const setDark = (d: boolean) => setMode(d ? "dark" : "light");
   const themeStyle = accentStyle(accent, mode) as CSSProperties;
-  const [palette, setPalette] = useState(false);
   const [caps, setCaps] = useState<Record<Capability, boolean>>({ website: true, bookings: true, store: true, payments: true });
   const [bookings, setBookings] = useState(seedBookings);
   const [decided, setDecided] = useState<string[]>([]);
@@ -81,6 +86,7 @@ export default function StudioApp({ forceMobile = false }: { forceMobile?: boole
   // The header search on a phone, and the record that is open on its own page.
   const [query, setQuery] = useState("");
   const [detail, setDetail] = useState<{ key: string; id: string } | null>(null);
+  const [read, setRead] = useState<string[]>([]);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(
@@ -92,10 +98,13 @@ export default function StudioApp({ forceMobile = false }: { forceMobile?: boole
 
   const claimsLeft = claims.filter((c) => !decided.includes(c.id));
   const pending = bookings.filter((b) => b.status === "Pending").length;
-  const badges: Partial<Record<SectionId, number>> = { bookings: pending, store: 3, payments: claimsLeft.length };
+  const myNotices = role === "owner" ? notices : notices.filter((n) => !n.ownerOnly);
+  const unreadNotices = myNotices.filter((n) => !read.includes(n.id)).length;
+  const badges: Partial<Record<SectionId, number>> = { bookings: pending, store: 3, payments: claimsLeft.length, inbox: unreadNotices };
+  const labels = Object.fromEntries(sections.map((s) => [s.id, s.label])) as Partial<Record<SectionId, string>>;
 
   const visible = useMemo(() => {
-    if (role === "staff") return sections.filter((s) => s.id === "today" || s.id === "bookings");
+    if (role === "staff") return sections.filter((s) => s.id === "today" || s.id === "bookings" || s.id === "inbox");
     return sections.filter((s) => !s.capability || caps[s.capability]);
   }, [role, caps]);
 
@@ -112,6 +121,13 @@ export default function StudioApp({ forceMobile = false }: { forceMobile?: boole
   }, [current, role, bookings]);
 
   const activeTab = tabs.find((t) => t.id === tab) ?? tabs[0];
+
+  // Unread notices on this screen: counted on each tab, and shown on the rows they are about.
+  const unreadHere = myNotices.filter((n) => n.source === current.id && !read.includes(n.id));
+  const tabBadges: Record<string, number> = {};
+  for (const n of unreadHere) if (n.tab) tabBadges[n.tab] = (tabBadges[n.tab] ?? 0) + 1;
+  if (current.id === "payments" && claimsLeft.length) tabBadges.confirm = (tabBadges.confirm ?? 0) + claimsLeft.length;
+  const marks = Object.fromEntries(unreadHere.filter((n) => n.tab === activeTab?.id && n.ref && n.mark).map((n) => [n.ref, n.mark])) as Record<string, string>;
 
   function go(next: SectionId, nextTab?: string) {
     setSection(next);
@@ -224,17 +240,6 @@ export default function StudioApp({ forceMobile = false }: { forceMobile?: boole
     return () => cancelAnimationFrame(id);
   }, []);
 
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        setPalette((p) => !p);
-      }
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
-
   const commands: Command[] = useMemo(
     () =>
       visible.flatMap((s) => [
@@ -268,7 +273,34 @@ export default function StudioApp({ forceMobile = false }: { forceMobile?: boole
   const title = current.id === "today" ? `Good morning, ${name.split(" ")[0]}` : current.label;
   const blurb = current.id === "today" ? "Tuesday 13 October" : current.blurb;
 
+  function openNotice(n: Notice) {
+    setRead((r) => (r.includes(n.id) ? r : [...r, n.id]));
+    go(n.source, n.tab);
+  }
+
+  function viewAs(next: Role) {
+    setRole(next);
+    go("today");
+  }
+
+  // Shown on every screen while the owner previews a barber's view.
+  const preview =
+    role === "staff" ? (
+      <div className="s-preview-bar" role="status">
+        <Eye size={16} aria-hidden="true" />
+        <span>
+          Previewing as <strong>{workspace.staff}</strong>, a barber
+        </span>
+        <button type="button" className="s-btn is-small" onClick={() => viewAs("owner")}>
+          Back to owner view
+        </button>
+      </div>
+    ) : null;
+
   function body() {
+    if (current.id === "inbox") {
+      return <Notifications items={myNotices} read={read} markRead={(ids) => setRead((r) => Array.from(new Set([...r, ...ids])))} open={openNotice} icons={icons} labels={labels} />;
+    }
     if (current.id === "today") {
       return role === "staff" ? <MyDay bookings={bookings} setStatus={setStatus} /> : <Today go={go} openForm={openForm} bookings={bookings} claimsLeft={claimsLeft} caps={caps} />;
     }
@@ -292,7 +324,7 @@ export default function StudioApp({ forceMobile = false }: { forceMobile?: boole
       case "theme":
         return <ThemeSettings mode={mode} accent={accent} setMode={setMode} setAccent={setAccent} reset={resetTheme} />;
       case "workspace":
-        return <WorkspaceSettings caps={caps} toggle={(c) => setCaps((v) => ({ ...v, [c]: !v[c] }))} />;
+        return <WorkspaceSettings caps={caps} toggle={(c) => setCaps((v) => ({ ...v, [c]: !v[c] }))} viewAs={viewAs} />;
     }
     if (activeTab.table) {
       const key = `${current.id}/${activeTab.id}`;
@@ -341,8 +373,17 @@ export default function StudioApp({ forceMobile = false }: { forceMobile?: boole
         <DataTable
           key={key}
           def={def}
-          query={mobile ? query : undefined}
-          onOpen={def.detail ? (row) => setDetail({ key, id: row[0] }) : undefined}
+          query={query}
+          marks={marks}
+          onOpen={
+            def.detail
+              ? (row) => {
+                  setDetail({ key, id: row[0] });
+                  const seen = unreadHere.filter((n) => n.tab === activeTab.id && n.ref === row[0]).map((n) => n.id);
+                  if (seen.length) setRead((r) => [...r, ...seen]);
+                }
+              : undefined
+          }
           onAction={forms[key] ? () => openForm(key) : undefined}
         />
       );
@@ -353,7 +394,7 @@ export default function StudioApp({ forceMobile = false }: { forceMobile?: boole
 
   function railItem(s: SectionDef) {
     const Icon = icons[s.id];
-    const badge = role === "owner" ? badges[s.id] : s.id === "bookings" ? bookings.filter((b) => b.resource === "kevin" && b.status === "Pending").length : 0;
+    const badge = role === "owner" ? badges[s.id] : s.id === "bookings" ? bookings.filter((b) => b.resource === "kevin" && b.status === "Pending").length : s.id === "inbox" ? unreadNotices : 0;
     return (
       <button key={s.id} type="button" className="s-nav" aria-current={current.id === s.id ? "page" : undefined} onClick={() => go(s.id)}>
         <Icon size={18} aria-hidden="true" />
@@ -372,7 +413,7 @@ export default function StudioApp({ forceMobile = false }: { forceMobile?: boole
   );
 
   if (mobile) {
-    const staffBadges = { bookings: bookings.filter((b) => b.resource === "kevin" && b.status === "Pending").length };
+    const staffBadges = { bookings: bookings.filter((b) => b.resource === "kevin" && b.status === "Pending").length, inbox: unreadNotices };
     // The round button in the header opens the form for what this screen lists.
     const tabKey = activeTab ? `${current.id}/${activeTab.id}` : "";
     const actionKey =
@@ -401,7 +442,7 @@ export default function StudioApp({ forceMobile = false }: { forceMobile?: boole
         setQuery={setQuery}
         listName={activeTab?.table && !detail ? activeTab.label : undefined}
         activeTab={activeTab}
-        tabBadges={current.id === "payments" ? { confirm: claimsLeft.length } : {}}
+        tabBadges={tabBadges}
         action={detail ? undefined : action}
         onAction={actionKey ? () => openForm(actionKey) : undefined}
         overlay={layer}
@@ -416,9 +457,11 @@ export default function StudioApp({ forceMobile = false }: { forceMobile?: boole
         themeStyle={themeStyle}
         go={go}
         setTab={pickTab}
-        setRole={setRole}
-        setDark={setDark}
+        account={
+          <UserMenu compact name={name} role={role} dark={dark} setDark={setDark} openSettings={role === "owner" ? () => go("settings") : undefined} backToOwner={() => viewAs("owner")} siteHref={caps.website ? workspace.sitePath : undefined} />
+        }
       >
+        {preview}
         {body()}
       </MobileShell>
     );
@@ -435,12 +478,6 @@ export default function StudioApp({ forceMobile = false }: { forceMobile?: boole
           </span>
         </div>
 
-        <button type="button" className="s-jump" onClick={() => setPalette(true)}>
-          <Search size={15} aria-hidden="true" />
-          <span>Search or jump to</span>
-          <kbd>⌘K</kbd>
-        </button>
-
         <nav aria-label="Studio">
           {railGroups.map((group) => {
             const items = group.map((id) => visible.find((s) => s.id === id)).filter((s): s is SectionDef => Boolean(s));
@@ -452,69 +489,47 @@ export default function StudioApp({ forceMobile = false }: { forceMobile?: boole
           })}
         </nav>
 
-        <div className="s-rail-foot">
-          {role === "owner" && railItem(sections.find((s) => s.id === "settings")!)}
-          <div className="s-viewas">
-            <span className="s-label">Viewing as</span>
-            <div className="s-seg" role="group" aria-label="Viewing as">
-              <button type="button" aria-pressed={role === "owner"} onClick={() => setRole("owner")}>
-                Owner
-              </button>
-              <button
-                type="button"
-                aria-pressed={role === "staff"}
-                onClick={() => {
-                  setRole("staff");
-                  go("today");
-                }}
-              >
-                Barber
-              </button>
-            </div>
-          </div>
-          <div className="s-me">
-            <span className="s-avatar">{name[0]}</span>
-            <span>
-              <strong>{name}</strong>
-              <small>{role === "owner" ? "Owner" : "Barber, own bookings only"}</small>
-            </span>
-            <button type="button" className="s-icon-btn" onClick={() => setDark(!dark)} aria-label={dark ? "Use the light theme" : "Use the dark theme"}>
-              {dark ? <Sun size={16} /> : <Moon size={16} />}
-            </button>
-          </div>
-        </div>
+        {role === "owner" && <div className="s-rail-foot">{railItem(sections.find((s) => s.id === "settings")!)}</div>}
       </aside>
 
       <main className="s-main">
-        <header className="s-head">
-          <div className="s-head-row">
-            <div>
-              <h1>{title}</h1>
-              <p>{blurb}</p>
-            </div>
+        <div className="s-topbar">
+          <TopSearch query={query} setQuery={setQuery} commands={commands} listName={activeTab?.table && !detail ? activeTab.label : undefined} />
+          <div className="s-topbar-acts">
             {caps.website && (
               <a className="s-btn s-site" href={workspace.sitePath} target="_blank" rel="noopener noreferrer">
                 View site
                 <ExternalLink size={14} aria-hidden="true" />
               </a>
             )}
+            <UserMenu name={name} role={role} dark={dark} setDark={setDark} openSettings={role === "owner" ? () => go("settings") : undefined} backToOwner={() => viewAs("owner")} />
+          </div>
+        </div>
+        <header className="s-head">
+          <div className="s-head-row">
+            <div>
+              <h1>{title}</h1>
+              <p>{blurb}</p>
+            </div>
           </div>
           {tabs.length > 0 && (
             <div className="s-tabs" role="tablist" aria-label={current.label}>
               {tabs.map((t) => (
                 <button key={t.id} type="button" role="tab" aria-selected={activeTab?.id === t.id} onClick={() => pickTab(t.id)}>
                   {t.label}
-                  {current.id === "payments" && t.id === "confirm" && claimsLeft.length > 0 && <b>{claimsLeft.length}</b>}
+                  {tabBadges[t.id] ? <b>{tabBadges[t.id]}</b> : null}
                 </button>
               ))}
             </div>
           )}
         </header>
-        <div className="s-body">{body()}</div>
+        <div className="s-body">
+          {preview}
+          {body()}
+        </div>
       </main>
 
       <Assistant key={brief ?? "none"} brief={brief ?? undefined} section={current.id} sectionLabel={current.id === "today" ? "Today" : current.label} />
-      {palette && <CommandPalette commands={commands} close={() => setPalette(false)} />}
       {layer}
     </div>
   );

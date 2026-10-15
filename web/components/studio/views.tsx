@@ -13,6 +13,7 @@ import {
   type BookingStatus,
   type Capability,
   type Claim,
+  type Role,
   type SectionId,
   type SetupDef,
   type TableDef,
@@ -560,13 +561,18 @@ export function FilterRow({
   );
 }
 
+const squash = (s: string) => s.replace(/[^a-z0-9]/g, "");
+
 export function DataTable({
   def,
   onAction,
   onOpen,
   query: outer,
+  marks = {},
 }: {
   def: TableDef;
+  /** Unread notices on rows, by the row's first cell. */
+  marks?: Record<string, string>;
   onAction?: () => void;
   /** Opens one row on its own page. */
   onOpen?: (row: string[]) => void;
@@ -579,10 +585,12 @@ export function DataTable({
   const groups: FilterGroup[] = [...(def.filters ? [{ label: "Status", options: def.filters }] : []), ...(def.moreFilters ?? [])];
 
   const rows = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    // Every word has to match somewhere in the row; spaces and dashes are ignored, so "mpesa" finds "M-Pesa".
+    const words = query.toLowerCase().split(/\s+/).map(squash).filter(Boolean);
     return def.rows.filter((row) => {
       for (const v of Object.values(picked)) if (v && !row.includes(v)) return false;
-      return q === "" || row.some((cell) => cell.toLowerCase().includes(q));
+      const text = squash(row.join(" ").toLowerCase());
+      return words.every((w) => text.includes(w));
     });
   }, [def.rows, query, picked]);
 
@@ -626,7 +634,7 @@ export function DataTable({
               </tr>
             ) : (
               rows.map((row, ri) => (
-                <tr key={`${row.join("|")}:${ri}`} className={onOpen ? "is-link" : undefined} onClick={onOpen ? () => onOpen(row) : undefined}>
+                <tr key={`${row.join("|")}:${ri}`} className={[onOpen ? "is-link" : "", marks[row[0]] ? "is-new" : ""].join(" ").trim() || undefined} onClick={onOpen ? () => onOpen(row) : undefined}>
                   {row.map((cell, i) => (
                     <td key={i} data-label={def.cols[i]} className={i === statusCol ? "is-status" : undefined}>
                       {def.pills?.includes(i) && cell ? (
@@ -637,6 +645,12 @@ export function DataTable({
                         </button>
                       ) : (
                         cell
+                      )}
+                      {i === 0 && marks[row[0]] && (
+                        <span className="s-rowmark">
+                          <i className="s-dot" aria-hidden="true" />
+                          {marks[row[0]]}
+                        </span>
                       )}
                     </td>
                   ))}
@@ -917,12 +931,34 @@ export function ReportView({ id }: { id: string }) {
 
 /* ───────── Workspace settings ───────── */
 
-export function WorkspaceSettings({ caps, toggle }: { caps: Record<Capability, boolean>; toggle: (c: Capability) => void }) {
+export function WorkspaceSettings({ caps, toggle, viewAs }: { caps: Record<Capability, boolean>; toggle: (c: Capability) => void; viewAs: (r: Role) => void }) {
   return (
     <div className="s-setup">
       <section>
+        <h2>Preview the studio as</h2>
+        <p className="s-muted">See exactly what someone on your team sees. You can come back from the menu under your name.</p>
+        <ul className="s-card s-caps">
+          <li>
+            <span>
+              <strong>Owner</strong>
+              <small>Everything, including payments, billing and settings</small>
+            </span>
+            <span className="s-pill is-ok">You</span>
+          </li>
+          <li>
+            <span>
+              <strong>Barber</strong>
+              <small>Kevin M. Their own day and bookings only</small>
+            </span>
+            <button type="button" className="s-btn" onClick={() => viewAs("staff")}>
+              Preview
+            </button>
+          </li>
+        </ul>
+      </section>
+      <section>
         <h2>What this workspace does</h2>
-        <p className="s-muted">Switch on only what the business needs. The menu on the left follows these.</p>
+        <p className="s-muted">Switch on only what the business needs. Your menu follows these.</p>
         <ul className="s-card s-caps">
           {capabilities.map((c) => (
             <li key={c.id}>

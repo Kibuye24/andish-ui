@@ -1074,7 +1074,7 @@
   border-top: 1px solid var(--line);
 }
 
-.s-setup li > button:not(.s-switch),
+.s-setup li > button:not(.s-switch):not(.s-btn),
 .s-caps li {
   display: flex;
   align-items: center;
@@ -1083,12 +1083,12 @@
   padding: 14px 16px;
 }
 
-.s-setup li > button:not(.s-switch):hover {
+.s-setup li > button:not(.s-switch):not(.s-btn):hover {
   background: color-mix(in srgb, var(--sunken) 60%, transparent);
 }
 
 .s-setup li > span,
-.s-setup li > button:not(.s-switch) > span {
+.s-setup li > button:not(.s-switch):not(.s-btn) > span {
   flex: 1;
   min-width: 0;
 }
@@ -3115,4 +3115,451 @@ input + .s-affix {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+/* ───────── top bar: search on the left, site and person on the right ───────── */
+.s-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 60px;
+  padding: 0 32px;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.studio:not(.is-mobile) .s-head {
+  top: 60px;
+  padding-top: 18px;
+}
+
+.s-topbar-acts {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.s-topsearch {
+  position: relative;
+  flex: 1;
+  max-width: 460px;
+}
+
+.s-topsearch-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 10px 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--muted);
+}
+
+.s-topsearch-field:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.s-topsearch-field input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  font: inherit;
+  color: var(--ink);
+}
+
+.studio .s-topsearch-field input:focus-visible {
+  outline: none;
+}
+
+.s-topsearch-field input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.s-topsearch-field kbd {
+  padding: 1px 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 11px;
+}
+
+.s-topsearch-clear {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--sunken);
+  color: var(--muted);
+}
+
+.s-topsearch-pop {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  display: grid;
+  gap: 2px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: var(--float);
+  animation: s-pop 0.14s ease-out;
+}
+
+.s-topsearch-pop .s-label {
+  padding: 6px 8px 2px;
+}
+
+.s-topsearch-note {
+  padding: 6px 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.s-topsearch-pop button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 9px;
+  text-align: left;
+}
+
+.s-topsearch-pop button span {
+  flex: 1;
+  min-width: 0;
+}
+
+.s-topsearch-pop button strong {
+  display: block;
+  font-weight: 550;
+}
+
+.s-topsearch-pop button small {
+  display: block;
+  overflow: hidden;
+  color: var(--muted);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.s-topsearch-pop button[aria-selected="true"] {
+  background: var(--sunken);
+}
+
+.s-topsearch-pop button svg {
+  color: var(--faint);
+}
+
+/* the person: a pill that opens a short menu */
+.s-user {
+  position: relative;
+}
+
+.s-user-pill {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 10px 0 4px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+}
+
+.s-user-pill:hover,
+.s-user-pill[aria-expanded="true"] {
+  border-color: var(--line-strong);
+}
+
+.s-user-name {
+  display: grid;
+  text-align: left;
+  line-height: 1.15;
+}
+
+.s-user-name strong {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.s-user-name small {
+  font-size: 11.5px;
+}
+
+.s-user-flag {
+  position: absolute;
+  top: 0;
+  left: 26px;
+  width: 9px;
+  height: 9px;
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  background: var(--warn);
+}
+
+.s-user-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 40;
+  display: grid;
+  gap: 2px;
+  width: 250px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: var(--float);
+  animation: s-pop 0.14s ease-out;
+}
+
+.s-user-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+  padding: 8px 8px 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.s-user-head strong {
+  display: block;
+  font-weight: 600;
+}
+
+.s-user-head small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.s-user-menu > button,
+.s-user-menu > a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 9px;
+  color: var(--ink);
+  font-weight: 500;
+  text-align: left;
+  text-decoration: none;
+}
+
+.s-user-menu > button:hover,
+.s-user-menu > a:hover {
+  background: var(--sunken);
+}
+
+.s-user-menu svg {
+  color: var(--muted);
+}
+
+.s-user-menu .is-accent,
+.s-user-menu .is-accent svg {
+  color: var(--accent-text);
+}
+
+.s-user-menu .is-quiet {
+  color: var(--muted);
+}
+
+/* while the owner previews a barber's view */
+.s-preview-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 10px 12px 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--warn) 35%, var(--line));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--warn) 10%, var(--surface));
+}
+
+.s-preview-bar svg {
+  flex: none;
+  color: var(--warn);
+}
+
+.s-preview-bar span {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ───────── notifications ───────── */
+.s-sources {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.s-source {
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: var(--lift);
+  text-align: left;
+}
+
+.s-source:hover {
+  border-color: var(--line-strong);
+}
+
+.s-source[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.s-source strong {
+  margin-top: 10px;
+  font-weight: 600;
+}
+
+.s-source small {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.s-source-icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--sunken);
+  color: var(--accent-text);
+}
+
+.s-source[aria-pressed="true"] .s-source-icon {
+  background: var(--surface);
+}
+
+.s-source-icon.is-small {
+  width: 34px;
+  height: 34px;
+}
+
+.s-source-icon b {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  min-width: 18px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 10.5px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.s-notices-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 26px 0 10px;
+}
+
+.s-notice-list {
+  display: grid;
+  gap: 8px;
+}
+
+.s-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  text-align: left;
+}
+
+.s-notice:hover {
+  border-color: var(--line-strong);
+}
+
+.s-notice.is-new {
+  background: color-mix(in srgb, var(--accent-soft) 45%, var(--surface));
+}
+
+.s-notice-text {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+
+.s-notice-text small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.s-notice-text strong {
+  font-weight: 600;
+}
+
+.s-notice-text span {
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+.s-notice .s-dot {
+  margin-top: 6px;
+}
+
+.s-notice-go {
+  flex: none;
+  align-self: center;
+  color: var(--faint);
+}
+
+.s-setup li > .s-pill {
+  flex: none;
+}
+
+/* a row with an unread notice */
+.s-table tr.is-new td {
+  background: color-mix(in srgb, var(--accent-soft) 40%, transparent);
+}
+
+.s-table .s-rowmark {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+  color: var(--accent-text);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.s-table .s-rowmark .s-dot {
+  width: 7px;
+  height: 7px;
 }

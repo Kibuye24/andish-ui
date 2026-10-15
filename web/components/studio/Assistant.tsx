@@ -56,6 +56,7 @@ const prompts: Record<SectionId, string[]> = {
   website: ["Write an article introducing Achieng", "Add Sunday hours to the Home page"],
   files: ["Make an A3 poster for the beard care evening", "Find photos that are not used anywhere"],
   reports: ["Why are sales down this week?", "Which barber is busiest?"],
+  inbox: ["What needs me first?", "Summarise today's orders"],
   settings: ["Who can see payments?", "How many credits have I used?"],
 };
 

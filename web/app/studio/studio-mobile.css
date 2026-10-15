@@ -1092,3 +1092,435 @@
     animation: none;
   }
 }
+
+/* ───────── tabs: one scrolling row, faded where more are hiding, and a button for all ───────── */
+.m-tabbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 12px;
+}
+
+.is-mobile .m-tabbar .m-tabs {
+  --fade-l: 0px;
+  --fade-r: 0px;
+  flex: 1;
+  flex-wrap: nowrap;
+  min-width: 0;
+  margin: 0 0 0 -16px;
+  padding: 0 4px 0 16px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent 100%);
+}
+
+.is-mobile .m-tabbar:not(.is-overflow) .m-tabs {
+  margin-right: -16px;
+  padding-right: 16px;
+}
+
+.is-mobile .m-tabbar.is-overflow:not(.is-end) .m-tabs {
+  --fade-r: 44px;
+}
+
+.is-mobile .m-tabbar.is-scrolled .m-tabs {
+  --fade-l: 36px;
+}
+
+.is-mobile .m-tabbar .m-tabs button {
+  flex: none;
+  scroll-snap-align: center;
+}
+
+.m-tabs-all {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  height: 36px;
+  padding: 0 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.m-tabs-all .s-dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  border: 2px solid var(--bg);
+  width: 11px;
+  height: 11px;
+}
+
+.m-tab-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.m-tab-grid button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 52px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--sunken);
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 500;
+  text-align: left;
+}
+
+.m-tab-grid button[aria-current="true"] {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+.m-tab-grid b {
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 11px;
+  text-align: center;
+}
+
+/* filter pills scroll sideways too, with a fade that says there are more */
+.is-mobile .s-chips {
+  flex-wrap: nowrap;
+  margin-inline: -16px;
+  padding: 0 40px 0 16px;
+  overflow-x: auto;
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+}
+
+/* ───────── dock: the bar takes the full width, the bot floats just above it ───────── */
+.is-mobile .m-dock {
+  right: 12px;
+}
+
+.s-assistant.is-mobile {
+  right: 14px;
+  bottom: calc(86px + env(safe-area-inset-bottom, 0px));
+}
+
+.s-assistant.is-mobile .s-mascot-btn {
+  width: 54px;
+  height: 54px;
+}
+
+.is-mobile .m-body {
+  padding-bottom: 200px;
+}
+
+.is-mobile .s-toast-layer {
+  bottom: calc(150px + env(safe-area-inset-bottom, 0px));
+}
+
+/* More: every section as tiles, in rows as wide as the bar */
+.m-grid {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+  z-index: 17;
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 5), minmax(0, 1fr));
+  gap: 4px 2px;
+  padding: 12px 6px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--surface);
+  box-shadow: var(--float);
+  transform-origin: bottom right;
+  animation: s-pop 0.16s ease-out;
+}
+
+.m-grid button {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 8px 2px;
+  border-radius: 14px;
+  color: var(--ink);
+}
+
+.m-grid-icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 15px;
+  background: var(--sunken);
+  color: var(--ink);
+}
+
+.m-grid button[aria-current="page"] .m-grid-icon {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.m-grid-icon b {
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 17px;
+  text-align: center;
+}
+
+.m-grid-label {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 11.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* the person sits in the header as an avatar */
+.s-user.is-compact .s-user-pill {
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+}
+
+.s-user.is-compact .s-avatar {
+  width: 34px;
+  height: 34px;
+  font-size: 14px;
+}
+
+.s-user.is-compact .s-user-flag {
+  top: 2px;
+  left: auto;
+  right: 2px;
+}
+
+.is-mobile .s-user-menu {
+  width: 260px;
+}
+
+.is-mobile .s-user-menu > button,
+.is-mobile .s-user-menu > a {
+  padding: 12px 10px;
+}
+
+.is-mobile .s-preview-bar {
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+/* the sources become one row of compact cards that scrolls sideways */
+.is-mobile .s-sources {
+  display: flex;
+  gap: 8px;
+  margin-inline: -16px;
+  padding: 6px 40px 4px 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+}
+
+.is-mobile .s-sources::-webkit-scrollbar {
+  display: none;
+}
+
+.is-mobile .s-source {
+  flex: none;
+  width: 124px;
+  padding: 12px;
+}
+
+.is-mobile .s-source strong {
+  margin-top: 8px;
+}
+
+.is-mobile .s-notices-bar {
+  margin-top: 18px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-grid,
+  .s-topsearch-pop,
+  .s-user-menu {
+    animation: none;
+  }
+}
+
+/* ───────── header: a slim bar on top, then the page name with its action ───────── */
+.m-top-row.is-bar {
+  align-items: center;
+  padding-bottom: 2px;
+}
+
+.m-top-row.is-search {
+  padding-bottom: 2px;
+}
+
+.m-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0 14px;
+}
+
+.m-title-row h1 {
+  min-width: 0;
+}
+
+/* ───────── dock: one surface that grows upward for the rest of the sections ───────── */
+.m-dock-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--line-strong) 70%, transparent);
+  border-radius: 30px;
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  box-shadow: var(--float);
+  -webkit-backdrop-filter: blur(22px) saturate(1.6);
+  backdrop-filter: blur(22px) saturate(1.6);
+}
+
+.is-mobile .m-dock-panel .m-bar {
+  border: 0;
+  background: none;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.m-more {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.26s ease;
+}
+
+.m-dock-panel.is-open .m-more {
+  grid-template-rows: 1fr;
+}
+
+.m-more-inner {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  row-gap: 4px;
+  min-height: 0;
+  overflow: hidden;
+  margin: 0 10px;
+  padding: 0;
+  opacity: 0;
+  transition: opacity 0.2s ease, padding 0.26s ease;
+}
+
+.m-dock-panel.is-open .m-more-inner {
+  padding: 10px 0 8px;
+  border-bottom: 1px solid var(--line);
+  opacity: 1;
+}
+
+.m-more-inner button {
+  border: 0;
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  min-width: 0;
+  padding: 7px 2px 5px;
+  border-radius: 16px;
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.m-more-inner button[aria-current="page"] {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+.m-more-inner .m-bar-icon b {
+  position: absolute;
+  top: -5px;
+  left: calc(100% - 7px);
+}
+
+.is-mobile .m-pop-catch {
+  z-index: 13;
+}
+
+/* the bot rides above the bar, and moves up when the bar grows */
+.s-assistant.is-mobile {
+  transition: bottom 0.26s ease;
+}
+
+.is-more .s-assistant.is-mobile {
+  bottom: calc(96px + var(--more-rows, 1) * 56px + env(safe-area-inset-bottom, 0px));
+}
+
+/* a row or card with an unread notice */
+.s-rowmark {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  color: var(--accent-text);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.s-rowmark .s-dot {
+  width: 7px;
+  height: 7px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-more,
+  .m-more-inner,
+  .s-assistant.is-mobile {
+    transition: none;
+  }
+}
+
+.is-mobile .s-table tr.is-new td {
+  background: none;
+}
+
+.is-mobile .s-table tr.is-new {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+  background: color-mix(in srgb, var(--accent-soft) 35%, var(--surface));
+}
+
+/* four tabs or fewer: all on screen, wrapping to a second line if needed */
+.is-mobile .m-tabbar.is-few .m-tabs {
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  -webkit-mask-image: none;
+  mask-image: none;
+}

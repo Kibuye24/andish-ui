@@ -36,7 +36,7 @@ export type TabDef = {
   view?: "calendar" | "to-confirm" | "pages" | "appearance" | "report" | "workspace" | "theme";
 };
 
-export type SectionId = "today" | "bookings" | "store" | "payments" | "customers" | "website" | "files" | "reports" | "settings";
+export type SectionId = "today" | "bookings" | "store" | "payments" | "customers" | "website" | "files" | "reports" | "inbox" | "settings";
 
 export type SectionDef = {
   id: SectionId;
@@ -525,6 +525,7 @@ export const sections: SectionDef[] = [
       { id: "payments", label: "Payments", view: "report" },
     ],
   },
+  { id: "inbox", label: "Notifications", blurb: "Everything that happened, by where it came from", tabs: [] },
   {
     id: "settings",
     label: "Settings",
@@ -628,3 +629,34 @@ const details: Record<string, RecordDetail> = {
 };
 
 for (const s of sections) for (const t of s.tabs) if (t.table) t.table.detail = details[`${s.id}/${t.id}`];
+
+/* ───────── Notifications ───────── */
+
+export type Notice = {
+  id: string;
+  source: SectionId;
+  /** The tab the notice opens, inside its source. */
+  tab?: string;
+  /** The row it is about, by its first cell, so that row can carry the notice too. */
+  ref?: string;
+  /** What the row shows while the notice is unread. */
+  mark?: string;
+  title: string;
+  detail: string;
+  when: string;
+  /** Only the owner sees it when true; barbers see the rest. */
+  ownerOnly?: boolean;
+};
+
+export const notices: Notice[] = [
+  { id: "n1", source: "bookings", tab: "list", ref: "BK-2049", mark: "New request, waiting for you", title: "Peter Mwangi asked for 12:30 with Kevin", detail: "Hot towel shave and haircut. Confirm or decline so he knows.", when: "4 min ago" },
+  { id: "n2", source: "payments", tab: "all", ref: "Today, 10:30", mark: "Says they paid. Check the code", title: "Mercy Wanjiru says she paid KES 1,500", detail: "M-Pesa to till for order #1042. Check the code before you release the order.", when: "12 min ago", ownerOnly: true },
+  { id: "n3", source: "store", tab: "orders", ref: "#1045", mark: "New order, paid by M-Pesa", title: "Order #1045 placed", detail: "2 items, KES 2,300, paid by M-Pesa. Ready to pack.", when: "25 min ago", ownerOnly: true },
+  { id: "n4", source: "bookings", tab: "list", ref: "BK-2046", mark: "Status updated to Confirmed", title: "Ali Hassan's booking is confirmed", detail: "11:30 with Kevin. The deposit of KES 200 came in by M-Pesa.", when: "40 min ago" },
+  { id: "n5", source: "store", tab: "inventory", ref: "Beard oil 30 ml", mark: "Running low, 3 left", title: "Beard oil is running low", detail: "3 left in stock. Restock before the weekend.", when: "1 hour ago", ownerOnly: true },
+  { id: "n10", source: "bookings", tab: "list", ref: "BK-2041", mark: "Status updated to Completed", title: "Kevin finished Daniel Otieno's haircut", detail: "Marked completed and paid in full by M-Pesa.", when: "1 hour ago" },
+  { id: "n6", source: "customers", tab: "messages", ref: "Caroline Jeptoo", mark: "New message", title: "New message from your contact form", detail: "Caroline asks if you do group bookings for a wedding party.", when: "2 hours ago", ownerOnly: true },
+  { id: "n7", source: "customers", tab: "subscribers", title: "12 people joined your newsletter", detail: "Most came from the price list page this week.", when: "Yesterday", ownerOnly: true },
+  { id: "n9", source: "website", tab: "articles", ref: "How to ask for a fade", mark: "Published by Wanjiku", title: "Wanjiku published an article", detail: "\u201cHow to ask for a fade\u201d is live on your site.", when: "Yesterday", ownerOnly: true },
+  { id: "n8", source: "store", tab: "orders", ref: "#1043", mark: "Status updated to Fulfilled", title: "Order #1043 fulfilled", detail: "A walk-in sale of 3 items, KES 2,900.", when: "Yesterday", ownerOnly: true },
+];
